@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Norsk Kryssord - Nivåer</title>
+    <style>
+        :root { 
+            --bg: #0f172a; --panel: #1e293b; --accent: #facc15; 
+            --track: #bae6fd; --active-yellow: #fef9c3; 
+            --correct: #22c55e; --wrong: #ef4444; --reveal: #8b5cf6; 
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; background: var(--bg); color: white; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; display: flex; flex-direction: column; }
+        
+        header { flex-shrink: 0; padding: 10px; background: var(--panel); border-bottom: 1px solid #334155; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        
+        #clue-bar { flex-shrink: 0; padding: 12px; background: #334155; color: var(--accent); font-weight: 600; min-height: 55px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; text-align: center; }
+        
+        /* HELPER BUTTONS BAR */
+        .controls { flex-shrink: 0; padding: 8px; background: var(--panel); display: flex; justify-content: center; gap: 6px; border-bottom: 1px solid #334155; }
+        
+        #grid-container { flex-grow: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 10px; background: #020617; }
+        #grid { display: grid; gap: 1px; background: #334155; border: 2px solid #334155; margin: 0 auto; }
+        
+        .cell { width: 30px; height: 30px; background: white; color: black; position: relative; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 15px; transition: background 0.2s; }
+        .cell.black { background: var(--bg); border: none; }
+        .cell.track { background: var(--track) !important; }
+        .cell.active { background: var(--active-yellow) !important; box-shadow: inset 0 0 0 3px #fde047; z-index: 2; }
+        
+        /* Feedback colors */
+        .cell.correct-mark { background: var(--correct) !important; color: white; }
+        .cell.wrong-mark { background: var(--wrong) !important; color: white; }
+        
+        .number { position: absolute; top: 1px; left: 1px; font-size: 7px; color: #64748b; pointer-events: none; }
+
+        #keyboard { flex-shrink: 0; background: var(--panel); padding: 5px 2px 20px 2px; }
+        .kb-row { display: flex; justify-content: center; margin-bottom: 4px; }
+        .key { margin: 1px; padding: 12px 0; background: #475569; border-radius: 4px; flex: 1; max-width: 34px; font-weight: bold; font-size: 13px; text-align: center; color: white; box-shadow: 0 3px 0 #0f172a; cursor: pointer; }
+        .key:active { transform: translateY(2px); box-shadow: none; }
+
+        #win { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.96); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; }
+        .win-title { font-size: 3rem; color: var(--accent); margin: 0; }
+        .confetti { position: absolute; width: 8px; height: 8px; z-index: 2001; pointer-events: none; }
+
+        button, select { padding: 8px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+        .btn-blue { background: #2563eb; color: white; }
+        .btn-green { background: #10b981; color: white; }
+        .btn-purple { background: var(--reveal); color: white; }
+        .btn-red { background: #ef4444; color: white; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-top">
+        <select id="level-choice" onchange="initGame()" style="flex-grow: 1;">
+            <option value="grammar">Grammatikk (A2-B1)</option>
+            <option value="vocab">Vokabular (B2)</option>
+            <option value="fun">Moro & Blandet</option>
+        </select>
+        <button class="btn-blue" onclick="initGame()">NYTT BRETT</button>
+    </div>
+</header>
+
+<div id="clue-bar">Velg et nivå for å starte</div>
+
+<div class="controls">
+    <button class="btn-green" onclick="checkActiveWord()">SJEKK ORD</button>
+    <button class="btn-purple" onclick="revealLetter()">BOKSTAV</button>
+    <button class="btn-purple" onclick="revealWord()">VIS ORD</button>
+    <button class="btn-red" onclick="resetCurrentWord()">TØM</button>
+</div>
+
+<div id="grid-container"><div id="grid"></div></div>
+<div id="keyboard"></div>
+
+<div id="win">
+    <h1 class="win-title">🎉 HURRA!</h1>
+    <p id="win-msg" style="margin: 20px 0; font-size: 1.1rem; color: #bae6fd;"></p>
+    <button class="btn-blue" style="padding: 15px 30px;" onclick="initGame()">SPILL IGJEN</button>
+</div>
+
+<script>
+const WORD_BANK = [
+    {w:"FORDI", c:"Konjunksjon: gir en grunn", type:"grammar"},
+    {w:"DENNE", c:"Peker på noe entall (m/f)", type:"grammar"},
+    {w:"DISSE", c:"Peker på noe flertall", type:"grammar"},
+    {w:"HENNES", c:"Tilhører hun", type:"grammar"},
+    {w:"INGEN", c:"Motsatte av alle", type:"grammar"},
+    {w:"HVIS", c:"Brukes ved betingelse", type:"grammar"},
+    {w:"ELLER", c:"Valg mellom to ting", type:"grammar"},
+    {w:"ERFARING", c:"Kunnskap fra praksis", type:"vocab"},
+    {w:"UTDANNING", c:"Skolegang etter grunnskole", type:"vocab"},
+    {w:"MULIGHET", c:"En sjanse til noe", type:"vocab"},
+    {w:"FORSKJELL", c:"Det som gjør ting ulike", type:"vocab"},
+    {w:"MILJØ", c:"Naturen rundt oss", type:"vocab"},
+    {w:"DRØFTE", c:"Å diskutere nøye (B2 ord)", type:"vocab"},
+    {w:"VURDERE", c:"Å tenke over kvaliteten", type:"vocab"},
+    {w:"BANAN", c:"Gul frukt", type:"fun"},
+    {w:"NORGE", c:"Landet vårt", type:"fun"},
+    {w:"ELG", c:"Skogens konge", type:"fun"},
+    {w:"VANN", c:"Det vi drikker", type:"fun"},
+    {w:"IS", c:"Kald og god", type:"fun"},
+    {w:"SYKKEL", c:"Kjøretøy med to hjul", type:"fun”}, const WORD_BANK = [
+    // --- GRAMMATIKK (A2-B1 focus: Pronouns, Conjunctions, Prepositions) ---
+    {w:"HVORDAN", c:"Spørreord: På hvilken måte?", type:"grammar"},
+    {w:"DERFOR", c:"Konjunksjon: av den grunn", type:"grammar"},
+    {w:"ELLER", c:"Konjunksjon: valg mellom to ting", type:"grammar"},
+    {w:"BEGGE", c:"To av to; ikke bare den ene", type:"grammar"},
+    {w:"HENNES", c:"Eiendomspronomen: tilhører hun", type:"grammar"},
+    {w:"HVIS", c:"Konjunksjon: dersom / if", type:"grammar"},
+    {w:"INGEN", c:"Motsatte av 'alle'", type:"grammar"},
+    {w:"MENS", c:"Samtidig som noe annet skjer", type:"grammar"},
+    {w:"GJENNOM", c:"Preposisjon: fra den ene siden til den andre", type:"grammar"},
+    {w:"MELLOM", c:"Preposisjon: i midten av to ting", type:"grammar"},
+    {w:"UTEN", c:"Ikke med; mangler noe", type:"grammar"},
+    {w:"HVERANDRE", c:"To personer som gjør noe sammen", type:"grammar"},
+    {w:"DERSOM", c:"Et annet ord for 'hvis'", type:"grammar"},
+    {w:"SKULLE", c:"Preteritum av skal", type:"grammar"},
+    {w:"VÆRE", c:"Infinitiv: to be", type:"grammar"},
+
+    // --- VOKABULAR (B1-B2 focus: Society, Work, Education, Abstract) ---
+    {w:"ERFARING", c:"Kunnskap man får gjennom jobb eller liv", type:"vocab"},
+    {w:"UTDANNING", c:"Læring på skole eller universitet", type:"vocab"},
+    {w:"MULIGHET", c:"En sjanse til å gjøre noe", type:"vocab"},
+    {w:"ANSVAR", c:"Plikt til å stå for noe eller passe på", type:"vocab"},
+    {w:"MILJØ", c:"Naturen og omgivelsene våre", type:"vocab"},
+    {w:"SAMFUNN", c:"Folk som lever sammen i et land", type:"vocab"},
+    {w:"FORSKJELL", c:"Det som gjør to ting ulike", type:"vocab"},
+    {w:"UTVIKLING", c:"Prosessen når noe endrer seg og vokser", type:"vocab"},
+    {w:"UTFORDRING", c:"Noe som er vanskelig å klare", type:"vocab"},
+    {w:"SAMARBEID", c:"Å jobbe sammen mot et mål", type:"vocab"},
+    {w:"FORVENTE", c:"Å tro at noe skal skje", type:"vocab"},
+    {w:"DRØFTE", c:"Å diskutere en sak fra flere sider", type:"vocab"},
+    {w:"VURDERE", c:"Å dømme eller veie verdien av noe", type:"vocab"},
+    {w:"BEKREFTE", c:"Å si at noe er riktig eller sikkert", type:"vocab"},
+    {w:"KONKURRANSE", c:"Når flere prøver å være best", type:"vocab"},
+    {w:"TILLIT", c:"Å stole på noen", type:"vocab"},
+    {w:"RETUR", c:"Å reise eller sende noe tilbake", type:"vocab"},
+    {w:"STØTTE", c:"Hjelp eller oppmuntring", type:"vocab"},
+
+    // --- MORO (Nature, Animals, Common objects) ---
+    {w:"BANAN", c:"Lang gul frukt", type:"fun"},
+    {w:"KAFFE", c:"Populær mørk og varm drikk", type:"fun"},
+    {w:"NORGE", c:"Landet vårt i nord", type:"fun"},
+    {w:"SKOLE", c:"Huset der barn lærer", type:"fun"},
+    {w:"HYTTE", c:"Lite hus på fjellet eller ved sjøen", type:"fun"},
+    {w:"SYKKEL", c:"Kjøretøy med to hjul og pedaler", type:"fun"},
+    {w:"FROKOST", c:"Dagens første måltid", type:"fun"},
+    {w:"SOMMER", c:"Den varmeste årstiden", type:"fun"},
+    {w:"VINTER", c:"Årstiden med snø", type:"fun"},
+    {w:"STRAND", c:"Sand og vann", type:"fun"},
+    {w:"KJØKKEN", c:"Rommet der vi lager mat", type:"fun"},
+    {w:"VINDU", c:"Glass i veggen man ser ut av", type:"fun"},
+    {w:"SKOG", c:"Mange trær som står sammen", type:"fun"},
+    {w:"FERIE", c:"Fri fra jobb eller skole", type:"fun"},
+    {w:"REISE", c:"Dra til et annet sted", type:"fun"},
+    {w:"MUSIKK", c:"Lyd vi liker å høre på", type:"fun"}
+];
+
+// --- FILLER WORDS (Essential for solving the "Intersection Paradox") ---
+const FILLERS = [
+    {w:"ELV", c:"Vann som renner i naturen"},
+    {w:"ÅS", c:"Liten fjelltopp"},
+    {w:"ØY", c:"Land med vann på alle kanter"},
+    {w:"IS", c:"Kald dessert eller frosset vann"},
+    {w:"UT", c:"Motsatte av inn"},
+    {w:"OS", c:"Røyk eller damp"},
+    {w:"TE", c:"Drikk laget av blader"},
+    {w:"SE", c:"Å bruke øynene"},
+    {w:"GÅ", c:"Å bruke beina til å flytte seg"},
+    {w:"NÅ", c:"I dette øyeblikket"},
+    {w:"BO", c:"Ha et hjem"},
+    {w:"LO", c:"Fortid av å le"},
+    {w:"LA", c:"Å tillate noe"},
+    {w:"HO", c:"Hunkjønnspronomen (nynorsk/dialekt)"}Kr
+
+];
+
+const FILLERS = [{w:"ELV", c:"Vann i naturen"}, {w:"ÅS", c:"Liten høyde"}, {w:"ØY", c:"Land i vann"}, {w:"SE", c:"Bruke øynene"}, {w:"UT", c:"Motsatt av inn"}];
+
+let G = { size: 11, target: 8, grid: {}, words: [], user: {}, sel: null, dir: 'h', markers: {} };
+
+function initGame() {
+    const type = document.getElementById('level-choice').value;
+    const pool = [...WORD_BANK.filter(w => w.type === type), ...FILLERS].sort(() => Math.random() - 0.5);
+    G.grid = {}; G.words = []; G.user = {}; G.sel = null; G.markers = {}; G.dir = 'h';
+    document.getElementById('win').style.display = 'none';
+    removeConfetti();
+    forcePlace(pool.pop(), 2, 2, 'h');
+    for(let i = 0; i < 2000; i++) {
+        if(G.words.length >= G.target) break;
+        let w = pool[i % pool.length];
+        if(G.words.find(ex => ex.w === w.w)) continue;
+        for(let p of G.words) {
+            for(let j=0; j<w.w.length; j++) {
+                let matchIdx = p.w.indexOf(w.w[j]);
+                if(matchIdx !== -1) {
+                    let nDir = p.dir === 'h' ? 'v' : 'h';
+                    let r = nDir === 'v' ? p.cells[matchIdx].r - j : p.cells[matchIdx].r;
+                    let c = nDir === 'h' ? p.cells[matchIdx].c - j : p.cells[matchIdx].c;
+                    if(isValid(w.w, r, c, nDir)) { forcePlace(w, r, c, nDir); break; }
+                }
+            }
+            if(G.words.find(ex => ex.w === w.w)) break;
+        }
+    }
+    let count = 1;
+    let starts = G.words.map(w => ({k:`${w.cells[0].r}-${w.cells[0].c}`, r:w.cells[0].r, c:w.cells[0].c})).sort((a,b)=>a.r-b.r||a.c-b.c);
+    starts.forEach(s => { if(!G.markers[s.k]) G.markers[s.k] = count++; });
+    render();
+}
+
+function isValid(w, r, c, d) {
+    if(r < 1 || c < 1 || (d==='v' && r+w.length >= G.size-1) || (d==='h' && c+w.length >= G.size-1)) return false;
+    for(let i=-1; i<=w.length; i++) {
+        let rr = d==='v'?r+i:r, cc = d==='h'?c+i:c;
+        let cellExist = G.grid[`${rr}-${cc}`];
+        if(i === -1 || i === w.length) { if(cellExist) return false; continue; }
+        if(cellExist && cellExist !== w[i]) return false;
+        if(!cellExist) {
+            let neighbors = d==='h' ? [[rr-1,cc],[rr+1,cc]] : [[rr,cc-1],[rr,cc+1]];
+            for(let [nr,nc] of neighbors) if(G.grid[`${nr}-${nc}`]) return false;
+        }
+    }
+    return true;
+}
+
+function forcePlace(w, r, c, d) {
+    let cells = [];
+    for(let i=0; i<w.w.length; i++){
+        let rr = d==='v'?r+i:r, cc = d==='h'?c+i:c;
+        G.grid[`${rr}-${cc}`] = w.w[i];
+        cells.push({r:rr, c:cc});
+    }
+    G.words.push({...w, cells, dir:d});
+}
+
+function render() {
+    const el = document.getElementById("grid");
+    el.innerHTML = ""; el.style.gridTemplateColumns = `repeat(${G.size}, 30px)`;
+    for(let r=0; r<G.size; r++) {
+        for(let c=0; c<G.size; c++) {
+            let k = `${r}-${c}`, d = document.createElement("div");
+            d.className = "cell" + (G.grid[k] ? "" : " black");
+            if(G.grid[k]) {
+                if(G.markers[k]) d.innerHTML = `<span class="number">${G.markers[k]}</span>`;
+                let t = document.createElement("div"); t.id = "t-"+k; d.appendChild(t);
+                d.onclick = () => selectCell(k);
+            }
+            d.id = "c-"+k; el.appendChild(d);
+        }
+    }
+    updateUI();
+}
+
+function selectCell(k) {
+    clearFeedback();
+    let ws = G.words.filter(w => w.cells.some(c => `${c.r}-${c.c}` === k));
+    if(!ws.length) return;
+    if(G.sel === k && ws.length > 1) G.dir = (G.dir === 'h' ? 'v' : 'h');
+    else { G.sel = k; if(!ws.find(o => o.dir === G.dir)) G.dir = ws[0].dir; }
+    updateUI();
+}
+
+function getAW() { return G.words.find(w => w.dir === G.dir && w.cells.some(c => `${c.r}-${c.c}` === G.sel)); }
+
+function clearFeedback() {
+    document.querySelectorAll('.cell').forEach(el => el.classList.remove('correct-mark', 'wrong-mark'));
+}
+
+function checkActiveWord() {
+    let aw = getAW(); if(!aw) return;
+    aw.cells.forEach((c, i) => {
+        let k = `${c.r}-${c.c}`;
+        let el = document.getElementById("c-"+k);
+        if(G.user[k]) {
+            el.classList.add(G.user[k] === aw.w[i] ? "correct-mark" : "wrong-mark");
+        }
+    });
+}
+
+function revealLetter() { 
+    if(G.sel) { 
+        G.user[G.sel] = G.grid[G.sel]; 
+        updateUI(); 
+        checkWin(); 
+    } 
+}
+
+function revealWord() { 
+    let aw = getAW(); 
+    if(aw) { 
+        aw.cells.forEach(c => G.user[`${c.r}-${c.c}`] = G.grid[`${c.r}-${c.c}`]); 
+        updateUI(); 
+        checkWin(); 
+    } 
+}
+
+function resetCurrentWord() { 
+    let aw = getAW(); 
+    if(aw) { 
+        aw.cells.forEach(c => G.user[`${c.r}-${c.c}`] = ""); 
+        updateUI(); 
+    } 
+}
+
+function checkWin() { 
+    if(Object.keys(G.grid).length > 0 && Object.keys(G.grid).every(k => G.user[k] === G.grid[k])) {
+        document.getElementById('win-msg').innerText = "Du klarte brettet!";
+        document.getElementById('win').style.display='flex';
+        spawnConfetti();
+    } 
+}
+
+function spawnConfetti() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    for(let i=0; i<80; i++) {
+        let c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.top = (vh/2) + 'px'; c.style.left = (vw/2) + 'px';
+        c.style.background = `hsl(${Math.random()*360}, 100%, 60%)`;
+        document.getElementById('win').appendChild(c);
+        const x = (Math.random() - 0.5) * vw * 1.5;
+        const y = (Math.random() - 0.5) * vh * 1.5;
+        c.animate([{ transform: `translate(0,0) scale(1)`, opacity: 1 }, { transform: `translate(${x}px, ${y}px) scale(0) rotate(720deg)`, opacity: 0 }], { duration: 2500, easing: 'ease-out', fill: 'forwards' });
+    }
+}
+function removeConfetti() { document.querySelectorAll('.confetti').forEach(c => c.remove()); }
+
+function updateUI() {
+    document.querySelectorAll('.cell').forEach(e => e.classList.remove('active', 'track'));
+    let aw = getAW();
+    if(G.sel && aw) {
+        document.getElementById("c-"+G.sel).classList.add("active");
+        aw.cells.forEach(c => document.getElementById(`c-${c.r}-${c.c}`).classList.add('track'));
+        let headK = `${aw.cells[0].r}-${aw.cells[0].c}`;
+        document.getElementById("clue-bar").innerText = `${G.markers[headK]} ${G.dir==='h'?'VANNRETT':'LODDRETT'}: ${aw.c}`;
+    }
+    Object.keys(G.grid).forEach(k => { if(document.getElementById("t-"+k)) document.getElementById("t-"+k).innerText = G.user[k] || ""; });
+}
+
+function handleInput(key) {
+    let aw = getAW(); if(!aw) return;
+    clearFeedback();
+    let idx = aw.cells.findIndex(c => `${c.r}-${c.c}` === G.sel);
+    if(key === "⌫") { G.user[G.sel] = ""; if(idx > 0) G.sel = `${aw.cells[idx-1].r}-${aw.cells[idx-1].c}`; }
+    else { G.user[G.sel] = key; if(idx < aw.cells.length - 1) G.sel = `${aw.cells[idx+1].r}-${aw.cells[idx+1].c}`; }
+    updateUI(); checkWin();
+}
+
+const kb = [["Q","W","E","R","T","Y","U","I","O","P","Å"],["A","S","D","F","G","H","J","K","L","Ø","Æ"],["Z","X","C","V","B","N","M","⌫"]];
+kb.forEach(row => {
+    let r = document.createElement("div"); r.className = "kb-row";
+    row.forEach(key => {
+        let k = document.createElement("div"); k.className = "key"; k.innerText = key;
+        k.onclick = (e) => { e.preventDefault(); handleInput(key); }; r.appendChild(k);
+    });
+    document.getElementById("keyboard").appendChild(r);
+});
+initGame();
+</script>
+</body>
+</html>
