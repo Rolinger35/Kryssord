@@ -3,214 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Norsk Kryssord 20+ Pro</title>
+    <title>Master Norsk Kryssord</title>
     <style>
-        :root { --bg: #0f172a; --panel: #1e293b; --accent: #facc15; --track: #bae6fd; --active: #fef9c3; --correct: #22c55e; --wrong: #ef4444; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
-        body { margin: 0; height: 100dvh; background: var(--bg); color: white; display: flex; flex-direction: column; overflow: hidden; }
-        header { padding: 8px; background: var(--panel); display: flex; gap: 8px; border-bottom: 1px solid #334155; }
-        #clue-bar { padding: 10px; background: #334155; color: var(--accent); font-weight: 700; min-height: 60px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; border-bottom: 2px solid var(--bg); }
-        .controls { padding: 5px; display: flex; justify-content: center; gap: 4px; background: var(--panel); border-bottom: 1px solid #334155; }
-        #grid-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #020617; padding: 2px; overflow: auto; }
-        #grid { display: grid; gap: 1px; background: #334155; border: 1px solid #334155; }
+        :root { 
+            --bg: #020617; --panel: #0f172a; --accent: #38bdf8; 
+            --btn-bg: #1e293b; --text: #f8fafc; --track: #0c4a6e; 
+            --active: #facc15; --correct: #10b981; --wrong: #ef4444; 
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Inter', -apple-system, sans-serif; }
+        body { margin: 0; height: 100dvh; background: var(--bg); color: var(--text); display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* SLEEK REDESIGNED SELECTOR */
+        .mode-selector { 
+            display: flex; background: var(--panel); padding: 4px; border-radius: 12px; margin: 10px; border: 1px solid #334155;
+        }
+        .mode-btn { 
+            flex: 1; padding: 10px 5px; border: none; background: transparent; color: #94a3b8; 
+            font-size: 0.75rem; font-weight: 700; cursor: pointer; border-radius: 8px; transition: 0.2s;
+        }
+        .mode-btn.active { background: var(--accent); color: var(--bg); box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3); }
+
+        #clue-bar { 
+            padding: 12px; min-height: 60px; display: flex; align-items: center; justify-content: center; 
+            text-align: center; font-size: 0.95rem; line-height: 1.3; border-bottom: 1px solid #1e293b; color: var(--active);
+        }
+        
+        #grid-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 5px; overflow: auto; }
+        #grid { display: grid; gap: 1px; background: #334155; border: 2px solid #334155; border-radius: 4px; }
+        
         .cell { width: 19px; height: 19px; background: white; color: black; position: relative; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 10px; }
         .cell.black { background: var(--bg); border: none; }
-        .cell.track { background: var(--track) !important; }
-        .cell.active { background: var(--active) !important; box-shadow: inset 0 0 0 2px var(--accent); z-index: 5; }
+        .cell.track { background: #bae6fd !important; }
+        .cell.active-cell { background: var(--active) !important; z-index: 2; box-shadow: 0 0 10px var(--active); }
         .cell.correct-mark { background: var(--correct) !important; color: white; }
         .cell.wrong-mark { background: var(--wrong) !important; color: white; }
-        .number { position: absolute; top: 0px; left: 1px; font-size: 6px; color: #64748b; font-weight: normal; }
-        #keyboard { background: var(--panel); padding: 5px 2px 15px 2px; }
-        .kb-row { display: flex; justify-content: center; margin-bottom: 2px; }
-        .key { margin: 1px; padding: 10px 0; background: #475569; border-radius: 4px; flex: 1; max-width: 30px; font-weight: bold; text-align: center; font-size: 12px; box-shadow: 0 2px 0 #000; cursor: pointer; }
-        #win { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 999; }
-        button, select { padding: 8px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .number { position: absolute; top: 0px; left: 1px; font-size: 6px; color: #64748b; }
+
+        .game-tools { display: flex; gap: 8px; padding: 8px; justify-content: center; }
+        .tool-btn { padding: 8px 16px; border-radius: 8px; border: none; font-weight: 800; font-size: 0.75rem; cursor: pointer; color: white; }
+
+        #keyboard { background: var(--panel); padding: 5px 2px 25px 2px; border-radius: 20px 20px 0 0; }
+        .kb-row { display: flex; justify-content: center; margin-bottom: 3px; }
+        .key { margin: 1px; padding: 12px 0; background: #334155; border-radius: 5px; flex: 1; max-width: 30px; font-weight: bold; text-align: center; font-size: 12px; cursor: pointer; }
+        
+        #win { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
     </style>
 </head>
 <body>
 
-<header>
-    <select id="level-choice" style="flex:1" onchange="initGame()">
-        <option value="grammar">Grammatikk (En, Ei, Et +)</option>
-        <option value="vocab">Vokabular (B1-B2 Jobb/Skole)</option>
-        <option value="fun">Moro, Natur & Reise</option>
-    </select>
-    <button style="background:#2563eb; color:white;" onclick="initGame()">NYTT BRETT</button>
-</header>
-
-<div id="clue-bar">Leter etter 20+ ord...</div>
-
-<div class="controls">
-    <button style="background:#10b981; color:white;" onclick="checkActiveWord()">SJEKK ORD</button>
-    <button style="background:#8b5cf6; color:white;" onclick="revealLetter()">TIPS</button>
-    <button style="background:#ef4444; color:white;" onclick="resetCurrentWord()">TØM</button>
+<div class="mode-selector">
+    <button class="mode-btn active" onclick="setMode('grammar', this)">GRAMMATIKK</button>
+    <button class="mode-btn" onclick="setMode('vocab', this)">VOKABULAR</button>
+    <button class="mode-btn" onclick="setMode('fun', this)">MORO & NATUR</button>
 </div>
 
+<div id="clue-bar">Velg en kategori...</div>
+
 <div id="grid-container"><div id="grid"></div></div>
+
+<div class="game-tools">
+    <button class="tool-btn" style="background:#0ea5e9" onclick="initGame()">NYTT BRETT</button>
+    <button class="tool-btn" style="background:#10b981" onclick="checkActiveWord()">SJEKK</button>
+    <button class="tool-btn" style="background:#8b5cf6" onclick="revealLetter()">HINT</button>
+</div>
+
 <div id="keyboard"></div>
 
 <div id="win">
-    <h1 style="color:var(--accent); font-size: 3rem;">BRA JOBBA!</h1>
-    <p id="win-stat" style="font-size: 1.2rem;"></p>
-    <button style="background:#2563eb; color:white; padding:15px 30px; font-size: 1rem;" onclick="initGame()">SPILL NESTE</button>
+    <h1 style="color:var(--active); font-size: 2.5rem;">UTMERKET!</h1>
+    <p id="win-stat"></p>
+    <button class="tool-btn" style="background:var(--accent); padding:15px 30px;" onclick="initGame()">NESTE BRETT</button>
 </div>
 
 <script>
 const DB = {
     grammar: [
-        {w:"EN", c:"Hankjønn artikkel"}, {w:"EI", c:"Hunkjønn artikkel"}, {w:"ET", c:"Intetkjønn artikkel"},
-        {w:"HAN", c:"Han-person"}, {w:"HUN", c:"Hun-person"}, {w:"DENNE", c:"Nært objekt (m/f)"},
-        {w:"DETTE", c:"Nært objekt (n)"}, {w:"DISSE", c:"Flere nære objekter"}, {w:"FORDI", c:"Forklarer hvorfor"},
-        {w:"HVIS", c:"Betingelse (dersom)"}, {w:"ELLER", c:"Valgmulighet"}, {w:"IKKE", c:"Adverb for nektelse"},
-        {w:"OGSÅ", c:"I tillegg"}, {w:"BARE", c:"Kun"}, {w:"MEN", c:"Motsetning"},
-        {w:"MELLOM", c:"I midten"}, {w:"GJENNOM", c:"Fra side til side"}, {w:"SIDEN", c:"Tidligere / Fordi"},
-        {w:"HVORDAN", c:"Spørreord: måte"}, {w:"HVORFOR", c:"Spørreord: årsak"}, {w:"HVILKEN", c:"Spørreord: valg"},
-        {w:"INGEN", c:"Null"}, {w:"ALLE", c:"Samtlige"}, {w:"HVER", c:"Hver enkelt"},
-        {w:"SIN", c:"Eget (refleksiv)"}, {w:"DERES", c:"Tilhører dem"}, {w:"HANS", c:"Tilhører han"},
-        {w:"HENNES", c:"Tilhører hun"}, {w:"MENS", c:"Samtidig som"}, {w:"ENDA", c:"Tidsadverb (still)"},
-        {w:"ALDRI", c:"0 ganger"}, {w:"ALLTID", c:"100 ganger"}, {w:"OFTE", c:"Mange ganger"},
-        {w:"SJELDEN", c:"Ikke ofte"}, {w:"KANSKJE", c:"Muligens"}, {w:"GANSKE", c:"Temmelig"},
-        {w:"NESTEN", c:"Nær ved"}, {w:"HELT", c:"Fullstendig"}, {w:"DERE", c:"Dere (pronomen)"},
-        {w:"OSS", c:"Oss (pronomen)"}, {w:"DEG", c:"Deg (pronomen)"}, {w:"MEG", c:"Meg (pronomen)"},
-        {w:"SEG", c:"Seg (refleksiv)"}, {w:"VÅR", c:"Tilhører oss"}, {w:"MIN", c:"Tilhører meg"},
-        {w:"DIN", c:"Tilhører deg"}, {w:"VIL", c:"Hjelpeverb: ønske"}, {w:"KAN", c:"Hjelpeverb: evne"},
-        {w:"SKAL", c:"Hjelpeverb: fremtid"}, {w:"MÅ", c:"Hjelpeverb: tvang"}, {w:"BØR", c:"Hjelpeverb: råd"},
-        {w:"HETER", c:"Navnet mitt er..."}, {w:"BOR", c:"Hvor man bor"}, {w:"KOMMER", c:"Bevege seg hit"},
-        {w:"SNAKKER", c:"Bruke stemmen"}, {w:"SKRIVER", c:"Bokstaver på papir"}, {w:"LESER", c:"Se på tekst"},
-        {w:"HØRER", c:"Bruke ørene"}, {w:"SER", c:"Bruke øynene"}, {w:"SPISER", c:"Mat i munn"},
-        {w:"DRIKKER", c:"Væske i munn"}, {w:"SOVER", c:"Hvile om natta"}, {w:"VÅKNER", c:"Slutte å sove"},
-        {w:"LÆRER", c:"Få kunnskap"}, {w:"FORSTÅR", c:"Skjønner"}, {w:"HATER", c:"Motsatt av elsker"},
-        {w:"ELSKER", c:"Veldig glad i"}, {w:"LIKER", c:"Glad i"}, {w:"KJØPER", c:"Bruke penger"},
-        {w:"SELGER", c:"Få penger for ting"}, {w:"BETALER", c:"Gi penger"}, {w:"KOSTER", c:"Prisen på noe"},
-        {w:"BRUKER", c:"Anvende"}, {w:"TRENGER", c:"Må ha"}, {w:"HENTER", c:"Gå og få"},
-        {w:"SENDER", c:"Post eller epost"}, {w:"SVARER", c:"Motsatt av spørre"}, {w:"SPØR", c:"Vil vite noe"},
-        {w:"ÅPNER", c:"Motsatt av lukke"}, {w:"LUKKER", c:"Motsatt av åpne"}, {w:"STARTER", c:"Begynne"},
-        {w:"SLUTTER", c:"Ende"}, {w:"VENTER", c:"Stå stille til noe skjer"}, {w:"TENKER", c:"Bruke hjernen"},
-        {w:"TROR", c:"Mene noe"}, {w:"SYNES", c:"Personlig mening"}, {w:"VET", c:"Ha fakta"},
-        {w:"VISER", c:"La andre se"}, {w:"HOLDER", c:"Ha i hånda"}, {w:"LEGGER", c:"Plassere ned"},
-        {w:"SITTER", c:"På en stol"}, {w:"STÅR", c:"På beina"}, {w:"LIGGER", c:"I senga"},
-        {w:"GÅR", c:"Bevege seg"}, {w:"LØPER", c:"Springe fort"}, {w:"HOPPER", c:"Opp i lufta"}
+        {w:"DERFOR", c:"Konjunksjon: resultat"}, {w:"GJENNOM", c:"Preposisjon: fra start til slutt"}, {w:"HVILKEN", c:"Hvilken av disse?"},
+        {w:"HVORDAN", c:"Spørsmål om måte"}, {w:"HVORFOR", c:"Spørsmål om grunn"}, {w:"HVERANDRE", c:"To personer gjensidig"},
+        {w:"ALLEREDE", c:"Før forventet tid"}, {w:"FREMFOR", c:"Foran noe annet"}, {w:"INNENFOR", c:"På innsiden"},
+        {w:"UTENFOR", c:"På utsiden"}, {w:"MELLOM", c:"I midten av to"}, {w:"BARE", c:"Kun"},
+        {w:"ELLERS", c:"Hvis ikke"}, {w:"INGENTING", c:"Null ting"}, {w:"ALLE", c:"Hver eneste en"},
+        {w:"BEGGE", c:"To av to"}, {w:"VERKEN", c:"Ingen av de to alternativene"}, {w:"ENTEN", c:"Ett av to valg"},
+        {w:"HVIS", c:"Dersom"}, {w:"SIDEN", c:"Tidligere tid"}, {w:"ENDA", c:"Fortsatt"},
+        {w:"ALLTID", c:"Hver eneste gang"}, {w:"ALDRI", c:"Ikke en eneste gang"}, {w:"KANSKJE", c:"Muligens"},
+        {w:"NETTOPP", c:"Akkurat nå"}, {w:"OFTE", c:"Mange ganger"}, {w:"SJELDEN", c:"Få ganger"},
+        {w:"SJØLVSAGT", c:"Helt sikkert"}, {w:"VIRKELIG", c:"Ekte"}, {w:"VANNRETT", c:"Bortover (kryssord)"},
+        {w:"LODDRETT", c:"Nedover (kryssord)"}, {w:"HETER", c:"Å ha et navn"}, {w:"VURDERER", c:"Tenker på valget"},
+        {w:"FORKLARER", c:"Gjøre noe forståelig"}, {w:"BETYR", c:"Meningen med ordet"}, {w:"BESTÅR", c:"Laget av"},
+        {w:"HØRER", c:"Bruke ørene"}, {w:"SNAKKER", c:"Bruke munnen"}, {w:"SKRIVER", c:"Bokstaver på papir"},
+        {w:"LESER", c:"Se på tekst"}, {w:"KOMMER", c:"Bevege seg hit"}, {w:"REISER", c:"Dra på tur"},
+        {w:"SENDER", c:"Gi fra seg post"}, {w:"HENTER", c:"Gå og få noe"}, {w:"FINNER", c:"Oppdage noe"},
+        {w:"MISTER", c:"Ikke ha lenger"}, {w:"GJØR", c:"Utføre en handling"}, {w:"VIL", c:"Ønske å"},
+        {w:"SKAL", c:"Planlegge å"}, {w:"KAN", c:"Evne til"}, {w:"MÅ", c:"Nødvendighet"},
+        {w:"BØR", c:"Anbefaling"}, {w:"BRUKER", c:"Anvende noe"}, {w:"TRENGER", c:"Må ha noe"},
+        {w:"ELSKER", c:"Veldig glad i"}, {w:"LIKER", c:"Glad i"}, {w:"HATER", c:"Motsatt av elske"},
+        {w:"TENKER", c:"Bruke hodet"}, {w:"HUSKER", c:"Ikke glemme"}, {w:"GLEMMER", c:"Ikke huske"},
+        {w:"TROR", c:"Anta noe"}, {w:"SYNES", c:"Mene personlig"}, {w:"MENER", c:"Ha en mening"},
+        {w:"SVARER", c:"Gi et svar"}, {w:"SPØR", c:"Lure på noe"}, {w:"LEGGER", c:"Plassere flatt"},
+        {w:"SETTER", c:"Plassere oppreist"}, {w:"STÅR", c:"Motsatt av sitte"}, {w:"SITTER", c:"På en stol"},
+        {w:"LIGGER", c:"I senga"}, {w:"LØPER", c:"Springe fort"}, {w:"GÅR", c:"Bevege seg"},
+        {w:"SYKLER", c:"To hjul og pedaler"}, {w:"KJØRER", c:"Styre en bil"}, {w:"FLYR", c:"I lufta"},
+        {w:"SVØMMER", c:"I vannet"}, {w:"HOPPER", c:"Opp i lufta"}, {w:"DANSER", c:"Bevege seg til musikk"},
+        {w:"SYNGER", c:"Lage musikk med stemmen"}, {w:"MALER", c:"Lage bilde med farger"}, {w:"TEGNER", c:"Lage bilde med blyant"},
+        {w:"ÅPNER", c:"Motsatt av lukke"}, {w:"LUKKER", c:"Motsatt av åpne"}, {w:"STARTER", c:"Begynne på noe"},
+        {w:"SLUTTER", c:"Ende noe"}, {w:"KLARER", c:"Få til noe"}, {w:"PRØVER", c:"Forsøke"},
+        {w:"VISER", c:"La andre se"}, {w:"HOLDER", c:"Ha i hendene"}, {w:"BÆRER", c:"Løfte og flytte"},
+        {w:"MØTER", c:"Treffe noen"}, {w:"VENTER", c:"Stå stille til noe skjer"}, {w:"LOVER", c:"Si man skal gjøre noe"},
+        {w:"HÅPER", c:"Ønske noe skjer"}, {w:"GLEDE", c:"Positiv følelse"}, {w:"SORG", c:"Negativ følelse"},
+        {w:"FRYKT", c:"Å være redd"}, {w:"SINNE", c:"Å være sint"}
     ],
     vocab: [
-        {w:"UTDANNING", c:"Læring på skole/univ."}, {w:"ERFARING", c:"Praksis fra jobb"}, {w:"MULIGHET", c:"En sjanse"},
-        {w:"ANSVAR", c:"Plikt til å stå for noe"}, {w:"SAMFUNN", c:"Mennesker i et land"}, {w:"UTVIKLING", c:"Noe som gror/endres"},
-        {w:"KUNNSKAP", c:"Det man har lært"}, {w:"DRØFTE", c:"Diskutere nøye"}, {w:"VURDERE", c:"Tenke over verdi"},
-        {w:"SAMARBEID", c:"Jobbe sammen"}, {w:"TILLIT", c:"Å stole på noen"}, {w:"MILJØ", c:"Omgivelser/Natur"},
-        {w:"UTFORDRING", c:"Vanskelig oppgave"}, {w:"RESULTAT", c:"Slutten av en test"}, {w:"FORSKJELL", c:"Ulikhet"},
-        {w:"INTERESSE", c:"Noe man liker"}, {w:"BETYDNING", c:"Hvor viktig det er"}, {w:"RESSURS", c:"Verdi man kan bruke"},
-        {w:"DEMOKRATI", c:"Folkestyre"}, {w:"FORVENTNING", c:"Hva man tror kommer"}, {w:"PROSESS", c:"Gangsforløp"},
-        {w:"PROBLEM", c:"Noe som må løses"}, {w:"LØSNING", c:"Svaret på problemet"}, {w:"KONSEKVENS", c:"Følge av handling"},
-        {w:"MOTIVASJON", c:"Lyst til å jobbe"}, {w:"KOMPETANSE", c:"Hva man er god til"}, {w:"STRATEGI", c:"Plan for å vinne"},
-        {w:"ORGANISASJON", c:"En forening/bedrift"}, {w:"BUDSJETT", c:"Plan for penger"}, {w:"LOVGIVNING", c:"Alle landets lover"},
-        {w:"POLITIKK", c:"Styring av samfunnet"}, {w:"VELFERD", c:"Støtte fra staten"}, {w:"ØKONOMI", c:"Penger og ressurser"},
-        {w:"REKRUTTERE", c:"Ansette nye folk"}, {w:"IDENTITET", c:"Hvem man er"}, {w:"MANGFOLD", c:"Mange ulike folk"},
-        {w:"KVALITET", c:"Hvor god en vare er"}, {w:"SITUASJON", c:"Hvordan ting er nå"}, {w:"KOMMUNIKASJON", c:"Uveksling av info"},
-        {w:"MYNDIGHET", c:"De som bestemmer"}, {w:"FORHANDLING", c:"Bli enige om pris/lønn"}, {w:"INVESTERE", c:"Bruke penger for vekst"},
-        {w:"KONKURRANSE", c:"Kamp mellom bedrifter"}, {w:"PRODUKSJON", c:"Lage varer"}, {w:"MARKETING", c:"Reklame og salg"},
-        {w:"STILLING", c:"En jobb-tittel"}, {w:"SØKNAD", c:"Brev for å få jobb"}, {w:"INTERVJU", c:"Møte før ansettelse"},
-        {w:"ARBEIDSGIVER", c:"Sjefen som ansetter"}, {w:"ANSATT", c:"En som jobber der"}, {w:"LØNN", c:"Penger for jobb"},
-        {w:"PAUSE", c:"Hvile i arbeidstiden"}, {w:"FERIE", c:"Fri fra jobb"}, {w:"STREIK", c:"Nekte å jobbe"},
-        {w:"SKATT", c:"Penger til staten"}, {w:"AVGIFT", c:"Betaling for tjeneste"}, {w:"FORSIKRING", c:"Hjelp ved uhell"},
-        {w:"PENSJON", c:"Penger når man er gammel"}, {w:"VIKARIAT", c:"Jobbe for en annen"}, {w:"KONTRAKT", c:"Skriftlig avtale"},
-        {w:"OPPSIGELSE", c:"Slutte i jobben"}, {w:"ERFARING", c:"Hva du har gjort før"}, {w:"ATTEST", c:"Bevis på jobb"},
-        {w:"REFERANSE", c:"Noen sjefen kan ringe"}, {w:"FAGFORENING", c:"Gruppe for arbeidere"}, {w:"LEDELSE", c:"De som styrer"},
-        {w:"EFFEKTIVITET", c:"Hvor raskt man jobber"}, {w:"KAPASITET", c:"Hvor mye man klarer"}, {w:"KREATIVITET", c:"Nye idéer"},
-        {w:"INITIATIV", c:"Begynne på noe selv"}, {w:"LOJALITET", c:"Støtte bedriften"}, {w:"FLEKSIBEL", c:"Kan tilpasse seg"},
-        {w:"AMBISJON", c:"Lyst på suksess"}, {w:"KRAV", c:"Noe man må klare"}, {w:"REGLER", c:"Bestemmelser"},
-        {w:"ANALYSE", c:"Granske tall/info"}, {w:"BUDSJETT", c:"Pengeplan"}, {w:"REGNSKAP", c:"Oversikt over bruk"},
-        {w:"REVISJON", c:"Sjekke regnskapet"}, {w:"INFLASJON", c:"Prisene stiger"}, {w:"VALUTA", c:"Landets penger"},
-        {w:"EKSPORT", c:"Selge til utlandet"}, {w:"IMPORT", c:"Kjøpe fra utlandet"}, {w:"GLOBALISERING", c:"Verden blir likere"},
-        {w:"BÆREKRAFT", c:"Ta vare på fremtiden"}, {w:"RELEVANT", c:"Noe som passer til"}, {w:"ABSOLUTT", c:"Helt sikkert"},
-        {w:"GENERELT", c:"Som regel"}, {w:"SPESIELT", c:"Ikke vanlig"}, {w:"TYPISK", c:"Som forventet"}
+        {w:"SAMFUNNSFAG", c:"Læren om mennesker"}, {w:"UTVIKLING", c:"Endring over tid"}, {w:"KOMPETANSE", c:"Det du kan"},
+        {w:"FORVENTNING", c:"Det man tror vil skje"}, {w:"ANSVARLIG", c:"En som har plikt"}, {w:"UTFORDRING", c:"En vanskelig sjanse"},
+        {w:"ARBEIDSGIVER", c:"Den som ansetter"}, {w:"UTDANNING", c:"Skole og studier"}, {w:"ERFARING", c:"Det du har gjort før"},
+        {w:"RESSURSER", c:"Verdier et land har"}, {w:"DEMOKRATI", c:"Folkestyre"}, {w:"LOVGIVNING", c:"Reglene i et land"},
+        {w:"KVALIFISERT", c:"God nok for jobben"}, {w:"REKRUTTERE", c:"Finne nye ansatte"}, {w:"ORGANISASJON", c:"En gruppe med mål"},
+        {w:"KOMMUNIKASJON", c:"Uveksling av ord"}, {w:"MULIGHETER", c:"Mange sjanser"}, {w:"PROBLEMATISK", c:"Vanskelig"},
+        {w:"KONSEKVENS", c:"Resultatet av valg"}, {w:"FORHANDLING", c:"Å bli enige om pris"}, {w:"ØKONOMI", c:"Penger og styr"},
+        {w:"MOTIVASJON", c:"Lyst til å gjøre noe"}, {w:"PRESENTASJON", c:"Vise frem noe"}, {w:"SAMARBEID", c:"Jobbe sammen"},
+        {w:"INTERNASJONAL", c:"Hele verden"}, {w:"BÆREKRAFTIG", c:"Miljøvennlig over tid"}, {w:"INTEGRERING", c:"Bli del av gruppe"},
+        {w:"KULTURARV", c:"Gamle tradisjoner"}, {w:"TEKNOLOGI", c:"Nye maskiner og IT"}, {w:"FORSKNING", c:"Finne nye svar"},
+        {w:"LEVEKÅR", c:"Hvordan folk har det"}, {w:"RETTIGHET", c:"Noe man har krav på"}, {w:"STILLING", c:"En tittel i jobb"},
+        {w:"INNTEKT", c:"Penger du får inn"}, {w:"BUDSJETT", c:"Plan over penger"}, {w:"REGNSKAP", c:"Oversikt over penger"},
+        {w:"TILSKUDD", c:"Støtte i penger"}, {w:"GARANTI", c:"Løfte om at noe virker"}, {w:"STRATEGI", c:"En plan for suksess"},
+        {w:"EFFEKTIV", c:"Rask og god"}, {w:"FLEKSIBEL", c:"Kan endre seg"}, {w:"AMBISJONER", c:"Store mål"},
+        {w:"KAPASITET", c:"Hvor mye man klarer"}, {w:"DISKUSJON", c:"En samtale om uenighet"}, {w:"LOJALITET", c:"Stå ved noens side"},
+        {w:"PUBLIKUM", c:"De som ser på"}, {w:"KREATIV", c:"God til å lage ting"}, {w:"MODERNE", c:"Nytt i tiden"},
+        {w:"HISTORISK", c:"Noe fra fortiden"}, {w:"LOKAL", c:"Her i nærheten"}, {w:"GLOBAL", c:"Over hele jorda"},
+        {w:"OFFENTLIG", c:"For alle"}, {w:"PRIVAT", c:"Bare for meg"}, {w:"RELEVANT", c:"Noe som passer saken"},
+        {w:"KONSEPT", c:"En grunnidé"}, {w:"ANALYSE", c:"Granske noe nøye"}, {w:"KONTROLL", c:"Ha makt over"},
+        {w:"TILLIT", c:"Å stole på"}, {w:"RESPEKT", c:"Å vise aktelse"}, {w:"DIALOG", c:"Samtale mellom to"},
+        {w:"REFORM", c:"Stor planlagt endring"}, {w:"PERSPEKTIV", c:"En måte å se på"}, {w:"VALUTA", c:"Landets penger"},
+        {w:"EKSPORT", c:"Selge til andre land"}, {w:"IMPORT", c:"Kjøpe fra andre land"}, {w:"MARKEDS", c:"Plass for handel"},
+        {w:"KOMPLEKST", c:"Sammensatt/vanskelig"}, {w:"STABIL", c:"Fast og trygg"}, {w:"VARIASJON", c:"Ulike typer"},
+        {w:"KATEGORI", c:"En gruppe ting"}, {w:"SYSTEM", c:"Orden på ting"}, {w:"FUNKSJON", c:"Hva det gjør"},
+        {w:"STRUKTUR", c:"Hvordan det er bygd"}, {w:"ELEMENT", c:"En del av noe"}, {w:"FAKTOR", c:"Noe som påvirker"},
+        {w:"KVALITET", c:"Hvor bra noe er"}, {w:"KVANTITET", c:"Hvor mye det er"}, {w:"OMFANG", c:"Hvor stort det er"},
+        {w:"IDENTITET", c:"Hvem du er"}, {w:"INITIATIV", c:"Gjøre noe uoppfordret"}, {w:"FORHOLD", c:"Relasjon"},
+        {w:"KRAV", c:"Noe man må ha"}, {w:"MÅL", c:"Det man vil nå"}, {w:"SØKNAD", c:"Brev om å få noe"},
+        {w:"ATTEST", c:"Bevis på erfaring"}, {w:"KONTAKT", c:"Forbindelse"}, {w:"PROSJEKT", c:"Tidsavgrenset jobb"},
+        {w:"RAPPORT", c:"Beskrivelse av noe"}, {w:"FORSLAG", c:"En idé til løsning"}, {w:"MØTE", c:"Folk samles"},
+        {w:"ANSVAR", c:"Plikt"}, {w:"LOVVERK", c:"Samling av lover"}, {w:"DOMSTOL", c:"Her bestemmes rett"},
+        {w:"POLITI", c:"Ordensmakt"}, {w:"SYKEHUS", c:"Her blir man frisk"}, {w:"MEDISIN", c:"Hjelp mot sykdom"},
+        {w:"RESEPT", c:"Seddel fra legen"}, {w:"PASIENT", c:"Syk person hos lege"}, {w:"KOMMUNE", c:"Lokalt styre"},
+        {w:"FYLKE", c:"Regionalt styre"}, {w:"STATEN", c:"Det øverste styret"}
     ],
     fun: [
-        {w:"BANAN", c:"Gul bøyde frukt"}, {w:"KAFFE", c:"Mørk og varm drikk"}, {w:"NORGE", c:"Landet vårt"},
-        {w:"SYKKEL", c:"Fremkomstmiddel med pedaler"}, {w:"SOMMER", c:"Den varmeste årstiden"}, {w:"VINTER", c:"Årstiden med snø"},
-        {w:"STRAND", c:"Sand ved havet"}, {w:"FISK", c:"Dyr i vannet"}, {w:"ELG", c:"Skogens konge"},
-        {w:"HYTTE", c:"Feriehus på fjellet"}, {w:"KJØKKEN", c:"Der vi lager mat"}, {w:"FROKOST", c:"Dagens første måltid"},
-        {w:"MIDDAG", c:"Dagens varme måltid"}, {w:"SKOLE", c:"Der barn lærer"}, {w:"BIL", c:"Kjøretøy på fire hjul"},
-        {w:"FLY", c:"Reise i lufta"}, {w:"BOK", c:"Noe å lese i"}, {w:"HUND", c:"Menneskets beste venn"},
-        {w:"KATT", c:"Lite dyr som maler"}, {w:"FJELL", c:"Høy topp i naturen"}, {w:"FJORD", c:"Vann mellom fjellene"},
-        {w:"TRE", c:"Grønn plante med stamme"}, {w:"SKOG", c:"Mange trær sammen"}, {w:"BLOMST", c:"Vokser i hagen"},
-        {w:"SOL", c:"Lyser om dagen"}, {w:"MÅNE", c:"Lyser om natta"}, {w:"REGN", c:"Vann fra himmelen"},
-        {w:"SNØ", c:"Hvitt og kaldt fra himmelen"}, {w:"VIND", c:"Luft som beveger seg"}, {w:"KLOKKE", c:"Viser tiden"},
-        {w:"PENGER", c:"Brukes i butikken"}, {w:"BUTIKK", c:"Her kjøper vi mat"}, {w:"BRØD", c:"Spises med pålegg"},
-        {w:"MELK", c:"Hvit drikk fra kua"}, {w:"OST", c:"Gult pålegg"}, {w:"EPLE", c:"Rund, rød frukt"},
-        {w:"STOL", c:"Noe å sitte på"}, {w:"BORD", c:"Her står maten"}, {w:"TV", c:"Her ser vi film"},
-        {w:"TELEFON", c:"Brukes til å ringe"}, {w:"DATA", c:"Maskin til jobb og spill"}, {w:"HETTE", c:"Sitter på jakka"},
-        {w:"SKO", c:"På beina"}, {w:"JAKKE", c:"Varmt plagg ute"}, {w:"BUKSE", c:"Dekker beina"},
-        {w:"SKJERM", c:"Den du ser på nå"}, {w:"MUS", c:"Liten grå gnager"}, {w:"HAVE", c:"Uteplass ved huset"},
-        {w:"SKUR", c:"Liten bod"}, {w:"GRILL", c:"Lager mat ute"}, {w:"SOMMER", c:"Sol og ferie"},
-        {w:"VINTER", c:"Ski og snø"}, {w:"VÅR", c:"Blomstene kommer"}, {w:"HØST", c:"Bladene faller"},
-        {w:"FLYPLASS", c:"Her starter ferien"}, {w:"TOG", c:"Går på skinner"}, {w:"BUSS", c:"Kjører mange i byen"},
-        {w:"BÅT", c:"Flyter på vannet"}, {w:"SYKKEL", c:"Har to hjul"}, {w:"REISE", c:"Dra på tur"},
-        {w:"KOFFERT", c:"Her har vi klærne"}, {w:"PASS", c:"Må ha for å reise ut"}, {w:"BILDE", c:"Fanget med kamera"},
-        {w:"MUSIKK", c:"Høre på toner"}, {w:"RADIO", c:"Høre nyheter og sang"}, {w:"FILM", c:"Se på kino"},
-        {w:"TEATER", c:"Se skuespill"}, {w:"SANG", c:"Bruke stemmen musikalsk"}, {w:"DANS", c:"Bevege kroppen til lyd"},
-        {w:"KINO", c:"Her ser vi film"}, {w:"PARK", c:"Grønt område i byen"}, {w:"GATE", c:"Her kjører bilene"},
-        {w:"BRO", c:"Går over vannet"}, {w:"ELV", c:"Rennende vann"}, {w:"VANN", c:"Det vi drikker"},
-        {w:"HAV", c:"Stort saltvann"}, {w:"INNSJØ", c:"Stort ferskvann"}, {w:"SVØMME", c:"Bevege seg i vann"},
-        {w:"LØPE", c:"Springe fort"}, {w:"TRENE", c:"Bruke kroppen"}, {w:"SPORT", c:"Aktivitet og lek"},
-        {w:"FOTBALL", c:"Spiller med ball"}, {w:"SKI", c:"Går på snø med disse"}, {w:"SKØYTER", c:"Går på is med disse"},
-        {w:"BALL", c:"Rund leke"}, {w:"SPILL", c:"Brett eller skjerm"}, {w:"KORT", c:"Leke med 52 stk"},
-        {w:"VENN", c:"En god person"}, {w:"FAMILIE", c:"De vi bor med"}, {w:"BARN", c:"Små mennesker"},
-        {w:"FORELDRE", c:"Mamma og pappa"}, {w:"BESTEMOR", c:"Mammas mamma"}, {w:"BESTEFAR", c:"Pappas pappa"},
-        {w:"TANTE", c:"Mammas søster"}, {w:"ONKEL", c:"Pappas bror"}, {w:"NABO", c:"Bor ved siden av"}
+        {w:"FROKOST", c:"Dagens første måltid"}, {w:"SJOKOLADE", c:"Søt godbit"}, {w:"FJELLTUR", c:"Gå tur i høyden"},
+        {w:"SOMMERFERIE", c:"Fri når det er varmt"}, {w:"VINTERSPORT", c:"Ski og skøyter"}, {w:"KAFFEKOPP", c:"Noe å drikke fra"},
+        {w:"SYKKELHJELM", c:"Beskytter hodet"}, {w:"APPELSIN", c:"Rund oransje frukt"}, {w:"SKOLESEKK", c:"Bære bøker i"},
+        {w:"HUNDRE", c:"Tallet 100"}, {w:"TUSEN", c:"Tallet 1000"}, {w:"MILLION", c:"Veldig stort tall"},
+        {w:"NORGE", c:"Vårt land"}, {w:"OSLO", c:"Hovedstaden"}, {w:"BERGEN", c:"Byen mellom syv fjell"},
+        {w:"TRONDHEIM", c:"Byen med Nidarosdomen"}, {w:"STAVANGER", c:"Oljebyen"}, {w:"KRISTIANSAND", c:"Sørlandsbyen"},
+        {w:"TROMSØ", c:"Nordens Paris"}, {w:"FJORD", c:"Vann i fjellet"}, {w:"ELG", c:"Skogens konge"},
+        {w:"REINSDYR", c:"Dyr i Nord-Norge"}, {w:"VARMT", c:"Mye sol"}, {w:"KALDT", c:"Mye snø"},
+        {w:"REGNVÆR", c:"Vått fra skyene"}, {w:"SOLSKINN", c:"Lyst og fint"}, {w:"STORM", c:"Veldig mye vind"},
+        {w:"LYN", c:"Strøm fra himmelen"}, {w:"TORDEN", c:"Bråk etter lyn"}, {w:"BRYLLUP", c:"Fest for kjærlighet"},
+        {w:"BURSDAG", c:"Feiring av alder"}, {w:"GAVE", c:"Noe man får"}, {w:"KAKE", c:"Søt mat til fest"},
+        {w:"BALLONG", c:"Rund leke med luft"}, {w:"ISOLASJON", c:"Holde på varmen"}, {w:"VINDU", c:"Glass i vegg"},
+        {w:"DØR", c:"Inngang til hus"}, {w:"TAK", c:"Over oss inne"}, {w:"GULV", c:"Under oss inne"},
+        {w:"KJØKKEN", c:"Her lages mat"}, {w:"STUE", c:"Her ser vi TV"}, {w:"BADEROM", c:"Her dusjer vi"},
+        {w:"SOVEROM", c:"Her sover vi"}, {w:"KJØLESKAP", c:"Holder maten kald"}, {w:"KOMFYR", c:"Lager varm mat"},
+        {w:"OPPVASK", c:"Vaske tallerkener"}, {w:"KLÆR", c:"Plagg vi har på"}, {w:"SKO", c:"På føttene"},
+        {w:"BUKSE", c:"Dekker beina"}, {w:"GENSER", c:"Varm overdel"}, {w:"JAKKE", c:"Ytterplagg"},
+        {w:"LUE", c:"På hodet når kaldt"}, {w:"VOTTER", c:"På hendene når kaldt"}, {w:"SOKKER", c:"Inne i skoene"},
+        {w:"REISE", c:"Dra til nye steder"}, {w:"KOFFERT", c:"Her har vi klærne"}, {w:"PASS", c:"Bevis på hvem du er"},
+        {w:"FLY", c:"Reise i lufta"}, {w:"TOG", c:"Reise på skinner"}, {w:"BUSS", c:"Reise sammen i byen"},
+        {w:"BIL", c:"Eget kjøretøy"}, {w:"BÅT", c:"Reise på vannet"}, {w:"FERGE", c:"Båt for biler"},
+        {w:"HOTELL", c:"Her sover vi på tur"}, {w:"STRAND", c:"Sand og vann"}, {w:"SKOG", c:"Mange trær"},
+        {w:"MARK", c:"Gress og blomster"}, {w:"HAGE", c:"Ute ved huset"}, {w:"PARK", c:"Grønt i byen"},
+        {w:"TRE", c:"Grønn plante med stamme"}, {w:"BLOMST", c:"Fargerik plante"}, {w:"FUGL", c:"Dyr som flyr"},
+        {w:"DYR", c:"Levende vesener"}, {w:"MAT", c:"Det vi spiser"}, {w:"DRIKKE", c:"Det vi drikker"},
+        {w:"VANN", c:"Viktigste drikke"}, {w:"BRØD", c:"Vanlig spise"}, {w:"MELK", c:"Hvit drikk"},
+        {w:"EPLER", c:"Rød frukt"}, {w:"PÆRE", c:"Grønn frukt"}, {w:"GULROT", c:"Oransje grønnsak"},
+        {w:"POTET", c:"Vokser i jorda"}, {w:"MIDDAG", c:"Varmt måltid"}, {w:"KVELDSMAT", c:"Siste måltid"},
+        {w:"KNIV", c:"Skjære med"}, {w:"GAFFEL", c:"Spise med"}, {w:"SKJE", c:"Spise suppe med"},
+        {w:"TALLERKEN", c:"Mat på denne"}, {w:"KOPP", c:"Drikke fra denne"}, {w:"GLASS", c:"Drikke vann fra"},
+        {w:"MUSIKK", c:"Fine lyder"}, {w:"SANG", c:"Bruke stemmen"}, {w:"DANS", c:"Bevege kroppen"},
+        {w:"SPORT", c:"Fysisk aktivitet"}, {w:"FOTBALL", c:"Spille med ball"}, {w:"SKI", c:"Gå på snø"},
+        {w:"SKØYTER", c:"Gå på is"}, {w:"SYKKEL", c:"Tråkke på pedaler"}, {w:"BOK", c:"Lese i denne"},
+        {w:"FILM", c:"Se på skjermen"}, {w:"TV", c:"Apparat for film"}, {w:"DATA", c:"Maskin for jobb/lek"},
+        {w:"MOBIL", c:"Telefon i lomma"}, {w:"INTERNETT", c:"Hele verdens nett"}, {w:"SPILL", c:"Moro sammen"}
     ],
     glue: [
-        {w:"AV", c:"Preposisjon"}, {w:"OG", c:"Konjunksjon"}, {w:"UT", c:"Motsatt av inn"}, 
-        {w:"INN", c:"Motsatt av ut"}, {w:"SE", c:"Titte"}, {w:"GÅ", c:"Spasere"}, 
-        {w:"NÅ", c:"I dette øyeblikk"}, {w:"TA", c:"Gripe"}, {w:"DA", c:"Tidligere"},
-        {w:"ÅS", c:"Liten høyde"}, {w:"ØY", c:"Land i vann"}, {w:"IS", c:"Kald godbit"},
-        {w:"TE", c:"Drikk"}, {w:"LA", c:"Tillate"}, {w:"BO", c:"Ha hjem"},
-        {w:"SY", c:"Lage klær"}, {w:"RO", c:"Stille / padle"}, {w:"LE", c:"Latter"}
+        {w:"OG", c:"Konjunksjon"}, {w:"AV", c:"Preposisjon"}, {w:"PÅ", c:"Preposisjon"},
+        {w:"ER", c:"Være i presens"}, {w:"DE", c:"Pronomen flertall"}, {w:"VI", c:"Oss selv"},
+        {w:"DU", c:"Personen jeg ser"}, {w:"JA", c:"Positivt svar"}, {w:"NEI", c:"Negativt svar"},
+        {w:"UT", c:"Motsatt av inn"}, {w:"SE", c:"Bruke øynene"}, {w:"GÅ", c:"Bevege beina"},
+        {w:"NÅ", c:"Akkurat dette sekundet"}, {w:"TA", c:"Gripe noe"}, {w:"BO", c:"Ha et hjem"},
+        {w:"SY", c:"Lage med nål og tråd"}, {w:"RO", c:"Båt uten motor"}, {w:"LE", c:"Latterlyd"},
+        {w:"IS", c:"Kaldt vann eller dessert"}, {w:"ØY", c:"Land med vann rundt"}, {w:"TE", c:"Varm drikk"},
+        {w:"LO", c:"Preteritum av le"}, {w:"SA", c:"Preteritum av si"}, {w:"LA", c:"Tillate"},
+        {w:"MY", c:"Liten enhet"}, {w:"NY", c:"Motsatt av gammel"}, {w:"HA", c:"Eie"},
+        {w:"FÅ", c:"Motta"}, {w:"GI", c:"Overrekke"}, {w:"SE", c:"Titte"}
     ]
 };
 
-let G = { size: 18, target: 20, grid: {}, words: [], user: {}, sel: null, dir: 'h', markers: {} };
+let G = { mode: 'grammar', size: 18, grid: {}, words: [], user: {}, sel: null, dir: 'h', markers: {} };
+
+function setMode(mode, btn) {
+    G.mode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    initGame();
+}
 
 function initGame() {
-    const type = document.getElementById('level-choice').value;
-    // Combine primary list with glue bank to ensure connections
-    const pool = [...DB[type], ...DB.glue].sort(() => Math.random() - 0.5);
-    
+    const pool = [...DB[G.mode], ...DB.glue].sort(() => Math.random() - 0.5);
     G.grid = {}; G.words = []; G.user = {}; G.sel = null; G.markers = {};
-    
-    // Attempt building
-    forcePlace(pool.pop(), 8, 4, 'h');
-    for(let attempt=0; attempt<5000; attempt++) {
-        if(G.words.length >= 26) break; // Hard limit to prevent overcrowding
+    document.getElementById('win').style.display = 'none';
+
+    // Start placement
+    forcePlace(pool.pop(), Math.floor(G.size/2), 2, 'h');
+
+    // Advanced placement loop
+    for(let attempt=0; attempt<8000; attempt++) {
+        if(G.words.length >= 26) break;
         let w = pool[attempt % pool.length];
         if(G.words.find(ex => ex.w === w.w)) continue;
         
-        for(let p of G.words) {
-            for(let i=0; i<w.w.length; i++) {
-                let matchIdx = p.w.indexOf(w.w[i]);
-                if(matchIdx !== -1) {
-                    let nDir = p.dir === 'h' ? 'v' : 'h';
-                    let r = nDir === 'v' ? p.cells[matchIdx].r - i : p.cells[matchIdx].r;
-                    let c = nDir === 'h' ? p.cells[matchIdx].c - i : p.cells[matchIdx].c;
-                    if(isValid(w.w, r, c, nDir)) { 
-                        forcePlace(w, r, c, nDir); 
-                        break; 
-                    }
+        // Pick a random placed word to try and intersect with
+        let base = G.words[Math.floor(Math.random() * G.words.length)];
+        for(let i=0; i<w.w.length; i++) {
+            let matchIdx = base.w.indexOf(w.w[i]);
+            if(matchIdx !== -1) {
+                let nDir = base.dir === 'h' ? 'v' : 'h';
+                let r = nDir === 'v' ? base.cells[matchIdx].r - i : base.cells[matchIdx].r;
+                let c = nDir === 'h' ? base.cells[matchIdx].c - i : base.cells[matchIdx].c;
+                if(isValid(w.w, r, c, nDir)) { 
+                    forcePlace(w, r, c, nDir); 
+                    break; 
                 }
             }
-            if(G.words.find(ex => ex.w === w.w)) break;
         }
     }
     
-    // CRITICAL CHECK: If under 20 words, throw it away and restart immediately
-    if (G.words.length < 20) { 
-        console.log("Grid too small (" + G.words.length + "), regenerating...");
-        return initGame(); 
-    }
+    // Auto-Regenerate if below 20 words (Paradox Insurance)
+    if (G.words.length < 20) return initGame();
 
+    // Map markers
     let count = 1;
     let starts = G.words.map(w => ({k:`${w.cells[0].r}-${w.cells[0].c}`, r:w.cells[0].r, c:w.cells[0].c})).sort((a,b)=>a.r-b.r||a.c-b.c);
     starts.forEach(s => { if(!G.markers[s.k]) G.markers[s.k] = count++; });
     
-    document.getElementById('win').style.display = 'none';
     render();
     selectCell(Object.keys(G.grid)[0]);
 }
@@ -223,8 +258,13 @@ function isValid(w, r, c, d) {
         if(i === -1 || i === w.length) { if(cellExist) return false; continue; }
         if(cellExist && cellExist !== w[i]) return false;
         if(!cellExist) {
-            let neighbors = d==='h' ? [[rr-1,cc],[rr+1,cc]] : [[rr,cc-1],[rr,cc+1]];
-            for(let [nr,nc] of neighbors) if(G.grid[`${nr}-${nc}`]) return false;
+            let n = d==='h' ? [[rr-1,cc],[rr+1,cc]] : [[rr,cc-1],[rr,cc+1]];
+            for(let [nr,nc] of n) if(G.grid[`${nr}-${nc}`]) return false;
+            // check diagonal ends
+            if(i===0 || i===w.length-1) {
+                let diag = d==='h' ? [[rr,cc+(i===0?-1:1)]] : [[rr+(i===0?-1:1),cc]];
+                if(G.grid[`${diag[0][0]}-${diag[0][1]}`]) return false;
+            }
         }
     }
     return true;
@@ -277,20 +317,19 @@ function checkActiveWord() {
     });
 }
 function revealLetter() { if(G.sel) { G.user[G.sel] = G.grid[G.sel]; updateUI(); checkWin(); } }
-function resetCurrentWord() { let aw = getAW(); if(aw) { aw.cells.forEach(c => G.user[`${c.r}-${c.c}`] = ""); updateUI(); } }
 
 function checkWin() { 
     if(Object.keys(G.grid).length > 0 && Object.keys(G.grid).every(k => G.user[k] === G.grid[k])) {
-        document.getElementById('win-stat').innerText = `Du fant alle ${G.words.length} ordene!`;
+        document.getElementById('win-stat').innerText = `Fullført med ${G.words.length} ord!`;
         document.getElementById('win').style.display='flex';
     } 
 }
 
 function updateUI() {
-    document.querySelectorAll('.cell').forEach(e => e.classList.remove('active', 'track'));
+    document.querySelectorAll('.cell').forEach(e => e.classList.remove('active-cell', 'track'));
     let aw = getAW();
     if(G.sel && aw) {
-        document.getElementById("c-"+G.sel).classList.add("active");
+        document.getElementById("c-"+G.sel).classList.add("active-cell");
         aw.cells.forEach(c => { let cel = document.getElementById(`c-${c.r}-${c.c}`); if(cel) cel.classList.add('track'); });
         let headK = `${aw.cells[0].r}-${aw.cells[0].c}`;
         document.getElementById("clue-bar").innerText = `${G.markers[headK]} ${G.dir==='h'?'VANNRETT':'LODDRETT'}: ${aw.c}`;
