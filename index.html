@@ -23,7 +23,7 @@
         #grid-container { flex-grow: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 10px; background: #020617; }
         #grid { display: grid; gap: 1px; background: #334155; border: 2px solid #334155; margin: 0 auto; }
         
-        .cell { width: 30px; height: 30px; background: white; color: black; position: relative; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 15px; }
+        .cell { width: 28px; height: 28px; background: white; color: black; position: relative; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 14px; }
         .cell.black { background: var(--bg); border: none; }
         .cell.track { background: var(--track) !important; }
         .cell.active { background: var(--active-yellow) !important; box-shadow: inset 0 0 0 3px #fde047; z-index: 2; }
@@ -53,15 +53,15 @@
 <header>
     <div class="header-top">
         <select id="level-choice" onchange="initGame()" style="flex-grow: 1;">
-            <option value="grammar">Grammatikk (A2-B1)</option>
-            <option value="vocab">Vokabular (B2)</option>
-            <option value="fun">Moro & Blandet</option>
+            <option value="grammar">Grammatikk & Artikler</option>
+            <option value="vocab">Vokabular (B1-B2)</option>
+            <option value="fun">Moro & Natur</option>
         </select>
         <button class="btn-blue" onclick="initGame()">NYTT BRETT</button>
     </div>
 </header>
 
-<div id="clue-bar">Velg et nivå for å starte</div>
+<div id="clue-bar">Laster oppgaver...</div>
 
 <div class="controls">
     <button class="btn-green" onclick="checkActiveWord()">SJEKK</button>
@@ -82,107 +82,55 @@
 <script>
 const WORD_BANK = [
     // GRAMMAR
-    {w:"HVORDAN", c:"Spørreord: På hvilken måte?", type:"grammar"},
-    {w:"DERFOR", c:"Konjunksjon: av den grunn", type:"grammar"},
-    {w:"ELLER", c:"Konjunksjon: valg mellom to", type:"grammar"},
-    {w:"BEGGE", c:"To av to; begge to", type:"grammar"},
-    {w:"HENNES", c:"Tilhører hun", type:"grammar"},
-    {w:"HVIS", c:"Konjunksjon: dersom", type:"grammar"},
-    {w:"INGEN", c:"Motsatte av alle", type:"grammar"},
-    {w:"MENS", c:"Samtidig som", type:"grammar"},
-    {w:"UTEN", c:"Mangler noe", type:"grammar"},
-    {w:"DERSOM", c:"Et annet ord for hvis", type:"grammar"},
-    {w:"VÆRE", c:"To be", type:"grammar"}, {w:"HVORDAN", c:"Spørreord: På hvilken måte?", type:"grammar"},
-    {w:"DERFOR", c:"Konjunksjon: av den grunn", type:"grammar"},
-    {w:"ELLER", c:"Konjunksjon: valg mellom to ting", type:"grammar"},
-    {w:"BEGGE", c:"To av to; ikke bare den ene", type:"grammar"},
-    {w:"HENNES", c:"Eiendomspronomen: tilhører hun", type:"grammar"},
-    {w:"HVIS", c:"Konjunksjon: dersom / if", type:"grammar"},
+    {w:"EN", c:"Artikkel: Hankjønn (f.eks. ___ stol)", type:"grammar"},
+    {w:"EI", c:"Artikkel: Hunkjønn (f.eks. ___ hytte)", type:"grammar"},
+    {w:"ET", c:"Artikkel: Intetkjønn (f.eks. ___ hus)", type:"grammar"},
+    {w:"DENNE", c:"Peker på noe entall (hankjønn/hunkjønn)", type:"grammar"},
+    {w:"DETTE", c:"Peker på noe entall (intetkjønn)", type:"grammar"},
+    {w:"DISSE", c:"Peker på noe i flertall", type:"grammar"},
+    {w:"FORDI", c:"Brukes for å gi en grunn", type:"grammar"},
+    {w:"ELLER", c:"Valg mellom to ting", type:"grammar"},
+    {w:"HVIS", c:"Uttrykker en betingelse", type:"grammar"},
     {w:"INGEN", c:"Motsatte av 'alle'", type:"grammar"},
-    {w:"MENS", c:"Samtidig som noe annet skjer", type:"grammar"},
-    {w:"GJENNOM", c:"Preposisjon: fra den ene siden til den andre", type:"grammar"},
-    {w:"MELLOM", c:"Preposisjon: i midten av to ting", type:"grammar"},
-    {w:"UTEN", c:"Ikke med; mangler noe", type:"grammar"},
-    {w:"HVERANDRE", c:"To personer som gjør noe sammen", type:"grammar"},
-    {w:"DERSOM", c:"Et annet ord for 'hvis'", type:"grammar"},
-    {w:"SKULLE", c:"Preteritum av skal", type:"grammar"},
-    {w:"VÆRE", c:"Infinitiv: to be", type:"grammar"},
+    {w:"MELLOM", c:"I midten av to ting", type:"grammar"},
+    {w:"GJENNOM", c:"Fra den ene siden til den andre", type:"grammar"},
     
-    // VOCAB
-    {w:"ERFARING", c:"Kunnskap fra praksis", type:"vocab"},
-    {w:"UTDANNING", c:"Skolegang/studier", type:"vocab"},
-    {w:"MULIGHET", c:"En sjanse", type:"vocab"},
-    {w:"ANSVAR", c:"Plikt til å passe på", type:"vocab"},
-    {w:"MILJØ", c:"Naturen rundt oss", type:"vocab"},
-    {w:"SAMFUNN", c:"Folk i et land", type:"vocab"},
-    {w:"FORSKJELL", c:"Det som gjør ting ulike", type:"vocab"},
-    {w:"DRØFTE", c:"Å diskutere nøye", type:"vocab"},
-    {w:"VURDERE", c:"Å dømme kvalitet", type:"vocab"},
-    {w:"TILLIT", c:"Å stole på noen", type:"vocab"},
-    {w:"ERFARING", c:"Kunnskap man får gjennom jobb eller liv", type:"vocab"},
-    {w:"UTDANNING", c:"Læring på skole eller universitet", type:"vocab"},
+    // VOCAB (B1-B2)
+    {w:"ERFARING", c:"Kunnskap man får fra praksis", type:"vocab"},
+    {w:"UTDANNING", c:"Skolegang etter grunnskolen", type:"vocab"},
     {w:"MULIGHET", c:"En sjanse til å gjøre noe", type:"vocab"},
-    {w:"ANSVAR", c:"Plikt til å stå for noe eller passe på", type:"vocab"},
-    {w:"MILJØ", c:"Naturen og omgivelsene våre", type:"vocab"},
-    {w:"SAMFUNN", c:"Folk som lever sammen i et land", type:"vocab"},
+    {w:"ANSVAR", c:"Noe man har når man må passe på noe", type:"vocab"},
+    {w:"SAMFUNN", c:"Mennesker som lever sammen i et land", type:"vocab"},
     {w:"FORSKJELL", c:"Det som gjør to ting ulike", type:"vocab"},
-    {w:"UTVIKLING", c:"Prosessen når noe endrer seg og vokser", type:"vocab"},
-    {w:"UTFORDRING", c:"Noe som er vanskelig å klare", type:"vocab"},
-    {w:"SAMARBEID", c:"Å jobbe sammen mot et mål", type:"vocab"},
-    {w:"FORVENTE", c:"Å tro at noe skal skje", type:"vocab"},
+    {w:"VURDERE", c:"Å tenke over kvaliteten eller verdien", type:"vocab"},
     {w:"DRØFTE", c:"Å diskutere en sak fra flere sider", type:"vocab"},
-    {w:"VURDERE", c:"Å dømme eller veie verdien av noe", type:"vocab"},
-    {w:"BEKREFTE", c:"Å si at noe er riktig eller sikkert", type:"vocab"},
-    {w:"KONKURRANSE", c:"Når flere prøver å være best", type:"vocab"},
-    {w:"TILLIT", c:"Å stole på noen", type:"vocab"},
-    {w:"RETUR", c:"Å reise eller sende noe tilbake", type:"vocab"},
-    {w:"STØTTE", c:"Hjelp eller oppmuntring", type:"vocab"},
-    
+    {w:"MILJØ", c:"Naturen og omgivelsene rundt oss", type:"vocab"},
+    {w:"SAMARBEID", c:"Å jobbe sammen mot et felles mål", type:"vocab"},
+    {w:"TILLIT", c:"Følelsen av å kunne stole på noen", type:"vocab"},
+
     // FUN
-    {w:"BANAN", c:"Gul frukt", type:"fun"},
-    {w:"KAFFE", c:"Mørk varm drikk", type:"fun"},
-    {w:"NORGE", c:"Landet vårt", type:"fun"},
-    {w:"HYTTE", c:"Hus på fjellet", type:"fun"},
-    {w:"SYKKEL", c:"To hjul og pedaler", type:"fun"},
-    {w:"SOMMER", c:"Varm årstid", type:"fun"},
-    {w:"VINTER", c:"Kald årstid", type:"fun"},
-    {w:"STRAND", c:"Sand og vann", type:"fun"}, {w:"BANAN", c:"Lang gul frukt", type:"fun"},
-    {w:"KAFFE", c:"Populær mørk og varm drikk", type:"fun"},
+    {w:"BANAN", c:"Lang gul frukt", type:"fun"},
+    {w:"KAFFE", c:"Mørk og varm drikk", type:"fun"},
     {w:"NORGE", c:"Landet vårt i nord", type:"fun"},
-    {w:"SKOLE", c:"Huset der barn lærer", type:"fun"},
-    {w:"HYTTE", c:"Lite hus på fjellet eller ved sjøen", type:"fun"},
     {w:"SYKKEL", c:"Kjøretøy med to hjul og pedaler", type:"fun"},
-    {w:"FROKOST", c:"Dagens første måltid", type:"fun"},
     {w:"SOMMER", c:"Den varmeste årstiden", type:"fun"},
-    {w:"VINTER", c:"Årstiden med snø", type:"fun"},
-    {w:"STRAND", c:"Sand og vann", type:"fun"},
-    {w:"KJØKKEN", c:"Rommet der vi lager mat", type:"fun"},
-    {w:"VINDU", c:"Glass i veggen man ser ut av", type:"fun"},
-    {w:"SKOG", c:"Mange trær som står sammen", type:"fun"},
-    {w:"FERIE", c:"Fri fra jobb eller skole", type:"fun"},
-    {w:"REISE", c:"Dra til et annet sted", type:"fun"},
-    {w:"MUSIKK", c:"Lyd vi liker å høre på", type:"fun"}
+    {w:"VINTER", c:"Årstiden med snø og kulde", type:"fun"},
+    {w:"STRAND", c:"Område med sand ved havet", type:"fun"},
+    {w:"FISK", c:"Dyr som svømmer i vannet", type:"fun"},
+    {w:"ELG", c:"Dyret vi kaller skogens konge", type:"fun"}
 ];
 
 const FILLERS = [
-    {w:"ELV", c:"Vann i natur"}, {w:"ÅS", c:"Liten topp"}, {w:"ØY", c:"Land i vann"},
-    {w:"IS", c:"Kald dessert"}, {w:"UT", c:"Motsatt av inn"}, {w:"SE", c:"Bruke øyne"}, {w:"ELV", c:"Vann som renner i naturen"},
-    {w:"ÅS", c:"Liten fjelltopp"},
+    {w:"ELV", c:"Vann som renner i naturen"},
+    {w:"ÅS", c:"Liten høyde eller fjelltopp"},
     {w:"ØY", c:"Land med vann på alle kanter"},
     {w:"IS", c:"Kald dessert eller frosset vann"},
     {w:"UT", c:"Motsatte av inn"},
-    {w:"OS", c:"Røyk eller damp"},
-    {w:"TE", c:"Drikk laget av blader"},
     {w:"SE", c:"Å bruke øynene"},
-    {w:"GÅ", c:"Å bruke beina til å flytte seg"},
-    {w:"NÅ", c:"I dette øyeblikket"},
-    {w:"BO", c:"Ha et hjem"},
-    {w:"LO", c:"Fortid av å le"},
-    {w:"LA", c:"Å tillate noe"},
-    {w:"HO", c:"Hunkjønnspronomen (nynorsk/dialekt)"}
+    {w:"TE", c:"Varm drikk laget av blader"}
 ];
 
-let G = { size: 11, target: 8, grid: {}, words: [], user: {}, sel: null, dir: 'h', markers: {} };
+let G = { size: 13, target: 8, grid: {}, words: [], user: {}, sel: null, dir: 'h', markers: {} };
 
 function initGame() {
     const type = document.getElementById('level-choice').value;
@@ -192,14 +140,17 @@ function initGame() {
     document.getElementById('win').style.display = 'none';
     removeConfetti();
 
-    // Start med et tilfeldig ord fra poolen
-    if (pool.length > 0) forcePlace(pool.pop(), 2, 2, 'h');
+    // Start block: Try to place the first word
+    if (pool.length > 0) {
+        forcePlace(pool.pop(), 4, 2, 'h');
+    }
 
-    // Generator
-    for(let i = 0; i < 2000; i++) {
+    // Generation attempt
+    for(let i = 0; i < 3000; i++) {
         if(G.words.length >= G.target || pool.length === 0) break;
         let w = pool[i % pool.length];
         if(G.words.find(ex => ex.w === w.w)) continue;
+
         for(let p of G.words) {
             for(let j=0; j<w.w.length; j++) {
                 let matchIdx = p.w.indexOf(w.w[j]);
@@ -207,17 +158,27 @@ function initGame() {
                     let nDir = p.dir === 'h' ? 'v' : 'h';
                     let r = nDir === 'v' ? p.cells[matchIdx].r - j : p.cells[matchIdx].r;
                     let c = nDir === 'h' ? p.cells[matchIdx].c - j : p.cells[matchIdx].c;
-                    if(isValid(w.w, r, c, nDir)) { forcePlace(w, r, c, nDir); break; }
+                    if(isValid(w.w, r, c, nDir)) { 
+                        forcePlace(w, r, c, nDir); 
+                        break; 
+                    }
                 }
             }
             if(G.words.find(ex => ex.w === w.w)) break;
         }
     }
     
+    // Fail-safe: if grid is empty, just restart once
+    if (G.words.length < 2) { setTimeout(initGame, 10); return; }
+
     let count = 1;
     let starts = G.words.map(w => ({k:`${w.cells[0].r}-${w.cells[0].c}`, r:w.cells[0].r, c:w.cells[0].c})).sort((a,b)=>a.r-b.r||a.c-b.c);
     starts.forEach(s => { if(!G.markers[s.k]) G.markers[s.k] = count++; });
+    
     render();
+    // Auto-select first cell
+    const firstKey = Object.keys(G.grid)[0];
+    if(firstKey) selectCell(firstKey);
 }
 
 function isValid(w, r, c, d) {
@@ -247,7 +208,7 @@ function forcePlace(w, r, c, d) {
 
 function render() {
     const el = document.getElementById("grid");
-    el.innerHTML = ""; el.style.gridTemplateColumns = `repeat(${G.size}, 30px)`;
+    el.innerHTML = ""; el.style.gridTemplateColumns = `repeat(${G.size}, 28px)`;
     for(let r=0; r<G.size; r++) {
         for(let c=0; c<G.size; c++) {
             let k = `${r}-${c}`, d = document.createElement("div");
@@ -277,8 +238,7 @@ function getAW() { return G.words.find(w => w.dir === G.dir && w.cells.some(c =>
 function checkActiveWord() {
     let aw = getAW(); if(!aw) return;
     aw.cells.forEach((c, i) => {
-        let k = `${c.r}-${c.c}`;
-        let el = document.getElementById("c-"+k);
+        let k = `${c.r}-${c.c}`, el = document.getElementById("c-"+k);
         if(G.user[k]) el.classList.add(G.user[k] === aw.w[i] ? "correct-mark" : "wrong-mark");
     });
 }
@@ -293,6 +253,7 @@ function resetCurrentWord() {
 
 function checkWin() { 
     if(Object.keys(G.grid).length > 0 && Object.keys(G.grid).every(k => G.user[k] === G.grid[k])) {
+        document.getElementById('win-msg').innerText = "Du klarte nivået!";
         document.getElementById('win').style.display='flex';
         spawnConfetti();
     } 
@@ -300,7 +261,7 @@ function checkWin() {
 
 function spawnConfetti() {
     const vw = window.innerWidth, vh = window.innerHeight;
-    for(let i=0; i<70; i++) {
+    for(let i=0; i<60; i++) {
         let c = document.createElement('div'); c.className = 'confetti';
         c.style.top = (vh/2) + 'px'; c.style.left = (vw/2) + 'px';
         c.style.background = `hsl(${Math.random()*360}, 100%, 60%)`;
@@ -341,7 +302,9 @@ kb.forEach(row => {
     });
     document.getElementById("keyboard").appendChild(r);
 });
-initGame();
+
+// INITIALIZE ON LOAD
+window.onload = initGame;
 </script>
 </body>
 </html>
