@@ -3,115 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Norsk Kryssord 20+</title>
+    <title>Norsk Kryssord 100+ Master</title>
     <style>
-        :root { 
-            --bg: #0f172a; --panel: #1e293b; --accent: #facc15; 
-            --track: #bae6fd; --active-yellow: #fef9c3; 
-            --correct: #22c55e; --wrong: #ef4444; 
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; display: flex; flex-direction: column; }
-        header { padding: 8px; background: var(--panel); border-bottom: 1px solid #334155; display: flex; gap: 8px; }
-        #clue-bar { padding: 10px; background: #334155; color: var(--accent); font-weight: 600; min-height: 65px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; }
-        .controls { padding: 6px; background: var(--panel); display: flex; justify-content: center; gap: 4px; border-bottom: 1px solid #334155; }
-        #grid-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #020617; padding: 5px; overflow: auto; }
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #facc15; --track: #bae6fd; --active: #fef9c3; --correct: #22c55e; --wrong: #ef4444; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
+        body { margin: 0; height: 100dvh; background: var(--bg); color: white; display: flex; flex-direction: column; overflow: hidden; }
+        header { padding: 8px; background: var(--panel); display: flex; gap: 8px; border-bottom: 1px solid #334155; }
+        #clue-bar { padding: 8px; background: #334155; color: var(--accent); font-weight: 600; min-height: 50px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.85rem; }
+        .controls { padding: 5px; display: flex; justify-content: center; gap: 4px; background: var(--panel); }
+        #grid-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #020617; padding: 2px; overflow: auto; }
         #grid { display: grid; gap: 1px; background: #334155; border: 1px solid #334155; }
-        .cell { width: 22px; height: 22px; background: white; color: black; position: relative; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 11px; }
+        .cell { width: 19px; height: 19px; background: white; color: black; position: relative; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 9px; }
         .cell.black { background: var(--bg); border: none; }
         .cell.track { background: var(--track) !important; }
-        .cell.active { background: var(--active-yellow) !important; box-shadow: inset 0 0 0 2px var(--accent); }
+        .cell.active { background: var(--active) !important; box-shadow: inset 0 0 0 2px var(--accent); }
         .cell.correct-mark { background: var(--correct) !important; color: white; }
         .cell.wrong-mark { background: var(--wrong) !important; color: white; }
-        .number { position: absolute; top: 0px; left: 1px; font-size: 6px; color: #64748b; }
-        #keyboard { background: var(--panel); padding: 5px 2px 15px 2px; }
-        .kb-row { display: flex; justify-content: center; margin-bottom: 3px; }
-        .key { margin: 1px; padding: 10px 0; background: #475569; border-radius: 4px; flex: 1; max-width: 30px; font-weight: bold; text-align: center; cursor: pointer; font-size: 12px; box-shadow: 0 2px 0 #000; }
+        .number { position: absolute; top: 0px; left: 0.5px; font-size: 5px; color: #64748b; }
+        #keyboard { background: var(--panel); padding: 5px 2px 10px 2px; }
+        .kb-row { display: flex; justify-content: center; margin-bottom: 2px; }
+        .key { margin: 1px; padding: 8px 0; background: #475569; border-radius: 3px; flex: 1; max-width: 28px; font-weight: bold; text-align: center; font-size: 11px; box-shadow: 0 1px 0 #000; }
         #win { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 99; }
-        button, select { padding: 6px; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+        button, select { padding: 6px; border: none; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
     </style>
 </head>
 <body>
 
 <header>
     <select id="level-choice" style="flex:1" onchange="initGame()">
-        <option value="grammar">Grammatikk & Artikler</option>
-        <option value="vocab">Vokabular (B1-B2)</option>
-        <option value="fun">Moro & Natur</option>
+        <option value="grammar">100+ Grammatikk</option>
+        <option value="vocab">100+ Vokabular (B1-B2)</option>
+        <option value="fun">100+ Moro & Natur</option>
     </select>
     <button style="background:#2563eb; color:white;" onclick="initGame()">NYTT BRETT</button>
 </header>
 
-<div id="clue-bar">Laster 20+ ord...</div>
+<div id="clue-bar">Genererer brett med 20+ ord...</div>
 
 <div class="controls">
     <button style="background:#10b981; color:white;" onclick="checkActiveWord()">SJEKK</button>
     <button style="background:#8b5cf6; color:white;" onclick="revealLetter()">BOKSTAV</button>
     <button style="background:#8b5cf6; color:white;" onclick="revealWord()">ORD</button>
-    <button style="background:#ef4444; color:white;" onclick="resetCurrentWord()">TØM</button>
 </div>
 
 <div id="grid-container"><div id="grid"></div></div>
 <div id="keyboard"></div>
 
 <div id="win">
-    <h1 style="color:var(--accent)">🎉 GRATULERER!</h1>
-    <p>Du løste 20 ord!</p>
-    <button style="background:#2563eb; color:white; padding:10px 20px;" onclick="initGame()">NESTE BRETT</button>
+    <h1 style="color:var(--accent)">🎉 FANTASTISK!</h1>
+    <p id="win-stat"></p>
+    <button style="background:#2563eb; color:white; padding:10px 20px;" onclick="initGame()">NESTE</button>
 </div>
 
 <script>
-const WORD_BANK = [
-    // GRAMMAR (Focus on pronouns, articles, conjunctions)
-    {w:"EN", c:"Hankjønn artikkel", type:"grammar"}, {w:"EI", c:"Hunkjønn artikkel", type:"grammar"}, {w:"ET", c:"Intetkjønn artikkel", type:"grammar"},
-    {w:"HAN", c:"Han-person", type:"grammar"}, {w:"HUN", c:"Hun-person", type:"grammar"}, {w:"DE", c:"Tredje person flertall", type:"grammar"},
-    {w:"DENNE", c:"Noe nært (m/f)", type:"grammar"}, {w:"DETTE", c:"Noe nært (n)", type:"grammar"}, {w:"DISSE", c:"Flere ting nært", type:"grammar"},
-    {w:"FORDI", c:"Gir grunn", type:"grammar"}, {w:"HVIS", c:"Dersom", type:"grammar"}, {w:"ELLER", c:"Valg", type:"grammar"},
-    {w:"MEN", c:"Motsetning", type:"grammar"}, {w:"OGSA", c:"I tillegg", type:"grammar"}, {w:"IKKE", c:"Nektelse", type:"grammar"},
-    {w:"INGEN", c:"Null personer", type:"grammar"}, {w:"ALLE", c:"Hver eneste", type:"grammar"}, {w:"MELLOM", c:"I midten", type:"grammar"},
-    {w:"BAK", c:"Motsatt av foran", type:"grammar"}, {w:"UNDER", c:"Motsatt av over", type:"grammar"}, {w:"SIDEN", c:"Tidligere / Fordi", type:"grammar"},
-    {w:"HVER", c:"Hver enkelt", type:"grammar"}, {w:"SELV", c:"Alene / Personlig", type:"grammar"}, {w:"MENS", c:"Samtidig", type:"grammar"},
+// --- MASSIVE WORD DATABASE ---
+const DB = {
+    grammar: [
+        {w:"EN", c:"Hankjønn artikkel"}, {w:"EI", c:"Hunkjønn artikkel"}, {w:"ET", c:"Intetkjønn artikkel"},
+        {w:"HAN", c:"Pronomen: Mann"}, {w:"HUN", c:"Pronomen: Kvinne"}, {w:"DENNE", c:"Denne tingen her"},
+        {w:"DETTE", c:"Dette her (n)"}, {w:"DISSE", c:"Disse her (flertall)"}, {w:"FORDI", c:"Grunnen til"},
+        {w:"HVIS", c:"Dersom"}, {w:"ELLER", c:"Valgmulighet"}, {w:"IKKE", c:"Nektelse"},
+        {w:"DERFOR", c:"Av den grunn"}, {w:"MELLOM", c:"I midten"}, {w:"GJENNOM", c:"Fra start til slutt"},
+        {w:"HVER", c:"Hver enkelt"}, {w:"ALLE", c:"Samtlige"}, {w:"INGEN", c:"Null"},
+        {w:"MENS", c:"Samtidig som"}, {w:"SIDEN", c:"Tidligere/Fordi"}, {w:"BAK", c:"Motsatt av foran"},
+        {w:"OVER", c:"Høyere enn"}, {w:"UNDER", c:"Lavere enn"}, {w:"HOS", c:"Ved siden av/hos"},
+        {w:"MOT", c:"I retning av"}, {w:"FRA", c:"Opprinnelse"}, {w:"TIL", c:"Destinasjon"},
+        {w:"HAR", c:"Eie (presens)"}, {w:"VAR", c:"Være (preteritum)"}, {w:"SKAL", c:"Framtid"},
+        {w:"VIL", c:"Ønske"}, {w:"KAN", c:"Evne"}, {w:"MÅ", c:"Nødvendighet"},
+        {w:"BØR", c:"Anbefaling"}, {w:"MYE", c:"Stort antall"}, {w:"LITT", c:"Lite antall"},
+        {w:"MANGE", c:"Tellbart mye"}, {w:"NOEN", c:"En eller flere"}, {w:"INGENTING", c:"Null ting"},
+        {w:"ALT", c:"Hele mengden"}, {w:"HER", c:"Dette stedet"}, {w:"DER", c:"Det stedet"},
+        {w:"HVA", c:"Spørsmål om ting"}, {w:"HVEM", c:"Spørsmål om person"}, {w:"HVOR", c:"Spørsmål om sted"},
+        {w:"NÅR", c:"Spørsmål om tid"}, {w:"HVORDAN", c:"Spørsmål om måte"}, {w:"HVORFOR", c:"Spørsmål om årsak"},
+        {w:"HVIS", c:"If"}, {w:"DA", c:"Tidspunkt i fortid"}, {w:"NÅ", c:"Nåtid"},
+        {w:"ENDA", c:"Still"}, {w:"OGSÅ", c:"I tillegg"}, {w:"BARE", c:"Kun"},
+        {w:"SELV", c:"Self"}, {w:"SAMME", c:"Lik"}, {w:"ANNEN", c:"Ulik"},
+        {w:"SLIK", c:"På denne måten"}, {w:"JO", c:"Svar på nektende spm"}, {w:"NEI", c:"Nektelse"},
+        {w:"JA", c:"Bekreftelse"}, {w:"VÅR", c:"Tilhører oss"}, {w:"DIN", c:"Tilhører deg"},
+        {w:"MIN", c:"Tilhører meg"}, {w:"DERES", c:"Tilhører dem"}, {w:"HANS", c:"Tilhører han"},
+        {w:"HENNES", c:"Tilhører hun"}, {w:"SIN", c:"Eget (refleksivt)"}, {w:"DE", c:"They"},
+        {w:"DERE", c:"You all"}, {w:"OSS", c:"Us"}, {w:"MEG", c:"Me"}, {w:"DEG", c:"You"},
+        {w:"SEG", c:"Refleksivt pronomen"}, {w:"HELE", c:"Komplett"}, {w:"HALVE", c:"50 prosent"},
+        {w:"FLERE", c:"Mange"}, {w:"FÆRRE", c:"Ikke så mange"}, {w:"MINDRE", c:"Liten størrelse"},
+        {w:"STØRRE", c:"Stor størrelse"}, {w:"BESTE", c:"Nummer en"}, {w:"VERSTE", c:"Dårligst"},
+        {w:"FØRST", c:"Starten"}, {w:"SIST", c:"Slutten"}, {w:"OFTE", c:"Mange ganger"},
+        {w:"ALDRI", c:"Null ganger"}, {w:"ALLTID", c:"Hver gang"}, {w:"KANSKJE", c:"Muligens"},
+        {w:"VELDIG", c:"Mye"}, {w:"GANSKE", c:"Temmelig"}, {w:"HELT", c:"Fullstendig"},
+        {w:"NESTEN", c:"Nær ved"}, {w:"ALLEREDE", c:"Før nå"}, {w:"NETTOPP", c:"Akkurat nå"},
+        {w:"ELLERS", c:"Hvis ikke"}, {w:"HVERANDRE", c:"To gjensidig"}, {w:"BEGGE", c:"To av to"},
+        {w:"ENTEN", c:"Valg start"}, {w:"VERKEN", c:"Ingen av delene"}, {w:"SA", c:"Konjunksjon: resultat"}
+    ],
+    vocab: [
+        {w:"UTDANNING", c:"Læring på skole"}, {w:"ERFARING", c:"Jobbpraksis"}, {w:"MULIGHET", c:"En sjanse"},
+        {w:"ANSVAR", c:"Plikt"}, {w:"SAMFUNN", c:"Folk i land"}, {w:"UTVIKLING", c:"Vekst/endring"},
+        {w:"FORSTÅELSE", c:"Det å skjønne"}, {w:"DRØFTE", c:"Diskutere"}, {w:"VURDERE", c:"Tenke over"},
+        {w:"TILLIT", c:"Stole på noen"}, {w:"SAMARBEID", c:"Jobbe sammen"}, {w:"MILJØ", c:"Natur og omgivelser"},
+        {w:"UTFORDRING", c:"Vanskelig oppgave"}, {w:"DEMOKRATI", c:"Folkestyre"}, {w:"KUNNSKAP", c:"Viten"},
+        {w:"RESSURS", c:"Verdi/hjelpemiddel"}, {w:"RESULTAT", c:"Slutten på noe"}, {w:"FORSKJELL", c:"Ulikhet"},
+        {w:"KVALITET", c:"Hvor bra noe er"}, {w:"FORHOLD", c:"Relasjon"}, {w:"STØTTE", c:"Hjelp/bidrag"},
+        {w:"BETYDNING", c:"Mening"}, {w:"INTERESSE", c:"Noe man liker"}, {w:"ØKONOMI", c:"Penger og styr"},
+        {w:"OFFENTLIG", c:"For alle"}, {w:"PRIVAT", c:"Personlig"}, {w:"RETTIGHET", c:"Krav på noe"},
+        {w:"LOVGIVNING", c:"Regler i landet"}, {w:"FORVENTE", c:"Tro på noe"}, {w:"BEKREFTE", c:"Si at det stemmer"},
+        {w:"MOTIVASJON", c:"Lyst til å gjøre"}, {w:"KOMPETANSE", c:"Evne/kunnskap"}, {w:"LOJALITET", c:"Troskap"},
+        {w:"KONKURRANSE", c:"Kamp om å være best"}, {w:"PROSESS", c:"Fremgangsmåte"}, {w:"REAKSJON", c:"Svar på handling"},
+        {w:"KULTUR", c:"Tradisjoner/verdier"}, {w:"POLITIKK", c:"Styring av landet"}, {w:"ARBEIDSTID", c:"Tid på jobb"},
+        {w:"INNTEKT", c:"Penger man tjener"}, {w:"SKATT", c:"Penger til staten"}, {w:"VELFERD", c:"Godt liv for alle"},
+        {w:"REKRUTTERE", c:"Ansette folk"}, {w:"STRATEGI", c:"Plan for mål"}, {w:"EFFEKTIV", c:"Rask og god"},
+        {w:"KOMMUNIKASJON", c:"Uveksling av info"}, {w:"INFLUENS", c:"Påvirkning"}, {w:"KRITERIE", c:"Krav"},
+        {w:"PERSPEKTIV", c:"Synsvinkel"}, {w:"ORGANISASJON", c:"Gruppe med mål"}, {w:"BUDSJETT", c:"Plan for penger"},
+        {w:"LOVVERK", c:"Alle lover"}, {w:"FORSKNING", c:"Søke ny viten"}, {w:"PUBLIKUM", c:"De som ser på"},
+        {w:"PRODUKSJON", c:"Lage noe"}, {w:"KONSEKVENS", c:"Følge av noe"}, {w:"MANGFOLD", c:"Variasjon"},
+        {w:"IDENTITET", c:"Hvem man er"}, {w:"GLOBAL", c:"Hele verden"}, {w:"LOKAL", c:"Nært område"},
+        {w:"AMBISJON", c:"Mål om suksess"}, {w:"KREATIV", c:"Idérik"}, {w:"KONTAKT", c:"Forbindelse"},
+        {w:"KONTROLL", c:"Styre noe"}, {w:"SYSTEM", c:"Orden på ting"}, {w:"ANALYSE", c:"Granske nøye"},
+        {w:"SITUASJON", c:"Tilstand"}, {w:"FUNKSJON", c:"Oppgave/virkning"}, {w:"REFORM", c:"Stor endring"},
+        {w:"MÅLSETTING", c:"Det man vil oppnå"}, {w:"DIALOG", c:"Samtale"}, {w:"PROSJEKT", c:"Tidsbestemt jobb"},
+        {w:"KAPASITET", c:"Hvor mye plass/evne"}, {w:"INTEGRERE", c:"Inkludere"}, {w:"BALANSE", c:"Likevekt"},
+        {w:"STABIL", c:"Fast/stødig"}, {w:"FOKUS", c:"Konsentrasjon"}, {w:"TEKNIKK", c:"Måte å gjøre på"},
+        {w:"VARIANTS", c:"Ulike typer"}, {w:"OPPGAVE", c:"Noe som må gjøres"}, {w:"MOTSTAND", c:"Kamp mot noe"},
+        {w:"TILTAK", c:"Noe man gjør for å hjelpe"}, {w:"FORUM", c:"Møteplass"}, {w:"KURS", c:"Opplæring"},
+        {w:"AVTALE", c:"Enighet mellom to"}, {w:"KONTRAKT", c:"Skriftlig avtale"}, {w:"FORSLAG", c:"Idé til løsning"},
+        {w:"DEBATT", c:"Offentlig diskusjon"}, {w:"RAPPORT", c:"Beskrivelse av sak"}, {w:"KVALIFISERT", c:"God nok"},
+        {w:"OPPLEVELSE", c:"Noe man erfarer"}, {w:"SYMPATI", c:"Medfølelse"}, {w:"RESPEKT", c:"Vise aktelse"},
+        {w:"TOLERANSE", c:"Godta ulikhet"}, {w:"AUTORITET", c:"Makt/ekspertise"}, {w:"GARANTI", c:"Løfte om kvalitet"},
+        {w:"MODERNE", c:"Nytt i tiden"}, {w:"HISTORISK", c:"Gammelt/viktig"}, {w:"FREMTID", c:"Tid som kommer"}
+    ],
+    fun: [
+        {w:"BANAN", c:"Gul frukt"}, {w:"KAFFE", c:"Mørk drikk"}, {w:"NORGE", c:"Vårt land"},
+        {w:"SYKKEL", c:"To hjul og pedaler"}, {w:"SOMMER", c:"Varm tid"}, {w:"VINTER", c:"Snø og kulde"},
+        {w:"STRAND", c:"Sand ved havet"}, {w:"FISK", c:"Svømmer i vann"}, {w:"ELG", c:"Skogens konge"},
+        {w:"HYTTE", c:"Feriehus på fjellet"}, {w:"KJØKKEN", c:"Der vi lager mat"}, {w:"VINDU", c:"Glass i veggen"},
+        {w:"FROKOST", c:"Morgenmat"}, {w:"MIDDAG", c:"Varm mat"}, {w:"SKOLE", c:"Lærested"},
+        {w:"BIL", c:"Kjøretøy"}, {w:"FLY", c:"Lufttransport"}, {w:"HUND", c:"Beste venn"},
+        {w:"KATT", c:"Liker mus"}, {w:"BOK", c:"Noe å lese"}, {w:"SENG", c:"Soveplass"},
+        {w:"FJORD", c:"Vann mellom fjell"}, {w:"FJELL", c:"Høy topp"}, {w:"SKOG", c:"Mange trær"},
+        {w:"BLOMST", c:"Vokser i hagen"}, {w:"SOL", c:"Varmer jorda"}, {w:"MÅNE", c:"Lyser om natta"},
+        {w:"REGN", c:"Vann fra skyene"}, {w:"SNØ", c:"Hvitt og kaldt"}, {w:"VIND", c:"Luft i bevegelse"},
+        {w:"STOL", c:"Sitte på"}, {w:"BORD", c:"Spise ved"}, {w:"TV", c:"Se på bilder"},
+        {w:"TELEFON", c:"Ringe med"}, {w:"DATA", c:"Jobbe på"}, {w:"KLOKKE", c:"Se tiden"},
+        {w:"PENGER", c:"Kjøpe ting"}, {w:"BUTIKK", c:"Handle i"}, {w:"BRØD", c:"Spise til lunsj"},
+        {w:"OST", c:"Pålegg fra melk"}, {w:"MELK", c:"Hvit drikk"}, {w:"VANN", c:"Det vi drikker mest"},
+        {w:"EPLE", c:"Rund frukt"}, {w:"PÆRE", c:"Grønn frukt"}, {w:"BÆR", c:"Små og søte"},
+        {w:"SKJE", c:"Spise suppe med"}, {w:"KNIV", c:"Skjære med"}, {w:"GAFFEL", c:"Stikke maten"},
+        {w:"TALLERKEN", c:"Ha maten på"}, {w:"KOPP", c:"Drikke av"}, {w:"GLASS", c:"Gjennomsiktig kopp"},
+        {w:"PAPIR", c:"Skrive på"}, {w:"BLYANT", c:"Skrive med"}, {w:"VESKE", c:"Bære ting i"},
+        {w:"SKO", c:"På beina"}, {w:"JAKKE", c:"Utenpå klærne"}, {w:"BUKSE", c:"Dekker beina"},
+        {w:"GENSER", c:"Varm overdel"}, {w:"LUE", c:"På hodet"}, {w:"VOTTER", c:"På hendene"},
+        {w:"Sykkel", c:"Pedalkraft"}, {w:"TOG", c:"Går på skinner"}, {w:"BUSS", c:"Mange passasjerer"},
+        {w:"BÅT", c:"På vannet"}, {w:"TRE", c:"Grønt og høyt"}, {w:"GRESS", c:"Grønt på bakken"},
+        {w:"HAGE", c:"Utenfor huset"}, {w:"VEI", c:"Kjøre på"}, {w:"GATE", c:"I byen"},
+        {w:"BY", c:"Mange hus"}, {w:"LAND", c:"Stort område"}, {w:"HAV", c:"Mye saltvann"},
+        {w:"INNSJØ", c:"Ferskvann"}, {w:"ELV", c:"Rennende vann"}, {w:"BRO", c:"Over vannet"},
+        {w:"TUNNEL", c:"Gjennom fjellet"}, {w:"STASJON", c:"Toget stopper her"}, {w:"APOTEK", c:"Kjøpe medisin"},
+        {w:"BANK", c:"Her er pengene"}, {w:"KINO", c:"Se film"}, {w:"PARK", c:"Grøntområde"},
+        {w:"SYKEHUS", c:"Her blir man frisk"}, {w:"POLITI", c:"Passer på oss"}, {w:"BRANN", c:"Varm og farlig"},
+        {w:"FLYPLASS", c:"Her letter flyet"}, {w:"HOTELL", c:"Sove borte"}, {w:"RESTAURANT", c:"Spise ute"},
+        {w:"KAFE", c:"Drikke kaffe ute"}, {w:"MUSIKK", c:"Høre på lyd"}, {w:"DANS", c:"Bevege seg til lyd"},
+        {w:"SPORT", c:"Fysisk aktivitet"}, {w:"FOTBALL", c:"Sparker ball"}, {w:"SKI", c:"Gå på snø"},
+        {w:"SKØYTER", c:"Gå på is"}, {w:"SVØMMING", c:"I bassenget"}, {w:"LØPING", c:"Bevege seg raskt"},
+        {w:"TUR", c:"Gå i naturen"}, {w:"KART", c:"Se hvor man er"}, {w:"KOMPASS", c:"Se retningen"},
+        {w:"Telt", c:"Sove ute i naturen"}
+    ],
+    fillers: [
+        {w:"IS", c:"Kald dessert"}, {w:"ØY", c:"Land i vann"}, {w:"UT", c:"Motsatt av inn"}, 
+        {w:"SE", c:"Se på"}, {w:"TE", c:"Varm drikk"}, {w:"ÅS", c:"Liten topp"},
+        {w:"ELV", c:"Rennende vann"}, {w:"NÅ", c:"Akkurat nå"}, {w:"BO", c:"Ha et hjem"},
+        {w:"GÅ", c:"Bruke beina"}, {w:"LA", c:"Tillate"}, {w:"SY", c:"Lage klær"},
+        {w:"RO", c:"Båt uten motor"}, {w:"LE", c:"Glad lyd"}, {w:"MÅ", c:"Nødvendig"},
+        {w:"TA", c:"Gripe noe"}
+    ]
+};
 
-    // VOCAB (B1-B2 Academic & Work)
-    {w:"UTDANNING", c:"Skolegang", type:"vocab"}, {w:"ERFARING", c:"Jobbhistorikk", type:"vocab"}, {w:"MULIGHET", c:"En sjanse", type:"vocab"},
-    {w:"ANSVAR", c:"Plikt", type:"vocab"}, {w:"SAMFUNN", c:"Folk i land", type:"vocab"}, {w:"FORSKJELL", c:"Ulikhet", type:"vocab"},
-    {w:"VURDERE", c:"Tenke over verdi", type:"vocab"}, {w:"DRØFTE", c:"Diskutere", type:"vocab"}, {w:"MILJØ", c:"Naturen rundt", type:"vocab"},
-    {w:"SAMARBEID", c:"Jobbe sammen", type:"vocab"}, {w:"TILLIT", c:"Å stole på", type:"vocab"}, {w:"UTFORDRING", c:"Vanskelig oppgave", type:"vocab"},
-    {w:"FORVENTNING", c:"Hva man tror skjer", type:"vocab"}, {w:"BETYDNING", c:"Mening", type:"vocab"}, {w:"LOVDATA", c:"Norsk rett", type:"vocab"},
-    {w:"KUNNSKAP", c:"Det man vet", type:"vocab"}, {w:"UTVIKLING", c:"Vekst", type:"vocab"}, {w:"PROSESS", c:"Gangsforløp", type:"vocab"},
-    {w:"RESSURS", c:"Noe man kan bruke", type:"vocab"}, {w:"FORHOLD", c:"Relasjon", type:"vocab"}, {w:"STØTTE", c:"Hjelp", type:"vocab"},
-    {w:"PROBLEM", c:"Noe som må løses", type:"vocab"}, {w:"RESULTAT", c:"Slutten av noe", type:"vocab"}, {w:"FORSKNING", c:"Vitenskap", type:"vocab"},
-
-    // FUN (Nature, Everyday, Objects)
-    {w:"BANAN", c:"Gul frukt", type:"fun"}, {w:"KAFFE", c:"Sort drikk", type:"fun"}, {w:"NORGE", c:"Hjemlandet", type:"fun"},
-    {w:"SYKKEL", c:"To hjul", type:"fun"}, {w:"SOMMER", c:"Varm tid", type:"fun"}, {w:"VINTER", c:"Snø-tid", type:"fun"},
-    {w:"STRAND", c:"Badeplass", type:"fun"}, {w:"FISK", c:"I havet", type:"fun"}, {w:"ELG", c:"Skogens konge", type:"fun"},
-    {w:"HYTTE", c:"Feriehus", type:"fun"}, {w:"SKOLE", c:"Lærested", type:"fun"}, {w:"FROKOST", c:"Morgenmat", type:"fun"},
-    {w:"MIDDAG", c:"Varm mat", type:"fun"}, {w:"VINDU", c:"Glass i vegg", type:"fun"}, {w:"DØR", c:"Inngang", type:"fun"},
-    {w:"BIL", c:"Kjøretøy", type:"fun"}, {w:"FLY", c:"I lufta", type:"fun"}, {w:"HUND", c:"Menneskets venn", type:"fun"},
-    {w:"KATT", c:"Sier mjau", type:"fun"}, {w:"BOK", c:"Noe å lese", type:"fun"}, {w:"SENG", c:"Å sove i", type:"fun"},
-    {w:"FJORD", c:"Norsk natur", type:"fun"}, {w:"FJELL", c:"Høy topp", type:"fun"}, {w:"SKOG", c:"Mange trær", type:"fun"}
-];
-
-const FILLERS = [
-    {w:"IS", c:"Kald mat"}, {w:"ØY", c:"Land i vann"}, {w:"UT", c:"Motsatt av inn"}, 
-    {w:"SE", c:"Se på"}, {w:"TE", c:"Varm drikk"}, {w:"AS", c:"Liten topp"},
-    {w:"ELV", c:"Vann i bevegelse"}, {w:"NÅ", c:"Akkurat nå"}, {w:"BO", c:"Ha et hjem"}
-];
-
-let G = { size: 16, target: 20, grid: {}, words: [], user: {}, sel: null, dir: 'h', markers: {} };
+let G = { size: 18, target: 20, grid: {}, words: [], user: {}, sel: null, dir: 'h', markers: {} };
 
 function initGame() {
     const type = document.getElementById('level-choice').value;
-    const pool = [...WORD_BANK.filter(w => w.type === type), ...FILLERS].sort(() => Math.random() - 0.5);
+    const pool = [...DB[type], ...DB.fillers].sort(() => Math.random() - 0.5);
     G.grid = {}; G.words = []; G.user = {}; G.sel = null; G.markers = {};
     document.getElementById('win').style.display = 'none';
 
     // Start placing
-    if (pool.length > 0) forcePlace(pool.pop(), 5, 5, 'h');
+    forcePlace(pool.pop(), 8, 4, 'h');
 
     // High intensity generation
-    for(let attempt=0; attempt<4000; attempt++) {
+    for(let attempt=0; attempt<5000; attempt++) {
         if(G.words.length >= G.target) break;
         let w = pool[attempt % pool.length];
         if(G.words.find(ex => ex.w === w.w)) continue;
@@ -123,26 +198,21 @@ function initGame() {
                     let nDir = p.dir === 'h' ? 'v' : 'h';
                     let r = nDir === 'v' ? p.cells[matchIdx].r - i : p.cells[matchIdx].r;
                     let c = nDir === 'h' ? p.cells[matchIdx].c - i : p.cells[matchIdx].c;
-                    if(isValid(w.w, r, c, nDir)) { 
-                        forcePlace(w, r, c, nDir); 
-                        break; 
-                    }
+                    if(isValid(w.w, r, c, nDir)) { forcePlace(w, r, c, nDir); break; }
                 }
             }
             if(G.words.find(ex => ex.w === w.w)) break;
         }
     }
     
-    // Fail-safe: if too small, try again automatically
-    if (G.words.length < 12) { setTimeout(initGame, 1); return; }
+    // Auto-retry if under 20 words
+    if (G.words.length < 20) { setTimeout(initGame, 1); return; }
 
     let count = 1;
-    let starts = G.words.map(w => ({k:`${w.cells[0].r}-${w.cells[0].c}`, r:w.cells[0].r, c:w.cells[0].c}))
-                 .sort((a,b)=>a.r-b.r||a.c-b.c);
+    let starts = G.words.map(w => ({k:`${w.cells[0].r}-${w.cells[0].c}`, r:w.cells[0].r, c:w.cells[0].c})).sort((a,b)=>a.r-b.r||a.c-b.c);
     starts.forEach(s => { if(!G.markers[s.k]) G.markers[s.k] = count++; });
-    
     render();
-    if(Object.keys(G.grid).length > 0) selectCell(Object.keys(G.grid)[0]);
+    selectCell(Object.keys(G.grid)[0]);
 }
 
 function isValid(w, r, c, d) {
@@ -164,7 +234,7 @@ function forcePlace(w, r, c, d) {
     let cells = [];
     for(let i=0; i<w.w.length; i++){
         let rr = d==='v'?r+i:r, cc = d==='h'?c+i:c;
-        G.grid[`${rr}-${cc}`] = w.w[i];
+        G.grid[`${rr}-${cc}`] = w.w[i].toUpperCase();
         cells.push({r:rr, c:cc});
     }
     G.words.push({...w, cells, dir:d});
@@ -172,7 +242,7 @@ function forcePlace(w, r, c, d) {
 
 function render() {
     const el = document.getElementById("grid");
-    el.innerHTML = ""; el.style.gridTemplateColumns = `repeat(${G.size}, 22px)`;
+    el.innerHTML = ""; el.style.gridTemplateColumns = `repeat(${G.size}, 19px)`;
     for(let r=0; r<G.size; r++) {
         for(let c=0; c<G.size; c++) {
             let k = `${r}-${c}`, d = document.createElement("div");
@@ -203,21 +273,25 @@ function checkActiveWord() {
     let aw = getAW(); if(!aw) return;
     aw.cells.forEach((c, i) => {
         let k = `${c.r}-${c.c}`, el = document.getElementById("c-"+k);
-        if(G.user[k]) el.classList.add(G.user[k] === aw.w[i] ? "correct-mark" : "wrong-mark");
+        if(G.user[k]) el.classList.add(G.user[k] === aw.w[i].toUpperCase() ? "correct-mark" : "wrong-mark");
     });
 }
 function revealLetter() { if(G.sel) { G.user[G.sel] = G.grid[G.sel]; updateUI(); checkWin(); } }
 function revealWord() { let aw = getAW(); if(aw) { aw.cells.forEach(c => G.user[`${c.r}-${c.c}`] = G.grid[`${c.r}-${c.c}`]); updateUI(); checkWin(); } }
-function resetCurrentWord() { let aw = getAW(); if(aw) { aw.cells.forEach(c => G.user[`${c.r}-${c.c}`] = ""); updateUI(); } }
 
-function checkWin() { if(Object.keys(G.grid).length > 0 && Object.keys(G.grid).every(k => G.user[k] === G.grid[k])) document.getElementById('win').style.display='flex'; }
+function checkWin() { 
+    if(Object.keys(G.grid).length > 0 && Object.keys(G.grid).every(k => G.user[k] === G.grid[k])) {
+        document.getElementById('win-stat').innerText = `Du løste alle ${G.words.length} ordene!`;
+        document.getElementById('win').style.display='flex';
+    } 
+}
 
 function updateUI() {
     document.querySelectorAll('.cell').forEach(e => e.classList.remove('active', 'track'));
     let aw = getAW();
     if(G.sel && aw) {
         document.getElementById("c-"+G.sel).classList.add("active");
-        aw.cells.forEach(c => document.getElementById(`c-${c.r}-${c.c}`).classList.add('track'));
+        aw.cells.forEach(c => { let cel = document.getElementById(`c-${c.r}-${c.c}`); if(cel) cel.classList.add('track'); });
         let headK = `${aw.cells[0].r}-${aw.cells[0].c}`;
         document.getElementById("clue-bar").innerText = `${G.markers[headK]} ${G.dir==='h'?'VANNRETT':'LODDRETT'}: ${aw.c}`;
     }
